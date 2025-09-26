@@ -1,0 +1,1 @@
+export const users = new Map<string, { email: string; password: string; role: string }>()
