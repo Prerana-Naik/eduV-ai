@@ -5,7 +5,7 @@ import { streamText } from "ai";
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const { messages, role = "student", userProfile, threadId } = await req.json();
+  const { messages, userProfile, threadId } = await req.json(); // Removed unused 'role'
   
   console.log(`🚀 Chat API called for thread: ${threadId}`);
   console.log(`🚀 Received ${messages.length} messages`);
@@ -40,54 +40,12 @@ export async function POST(req: Request) {
     ...messages,
   ];
 
-  // ✅ Save messages to thread-specific localStorage
-  if (threadId && typeof window !== 'undefined') {
-    try {
-      // Save user message
-      if (messages.length > 0) {
-        const userMessage = messages[messages.length - 1];
-        const threadMessagesKey = `thread_messages_${threadId}`;
-        const existingMessages = JSON.parse(localStorage.getItem(threadMessagesKey) || '[]');
-        
-        // Add user message if it's new
-        if (userMessage.role === 'user') {
-          existingMessages.push({
-            role: 'user',
-            content: userMessage.content,
-            timestamp: new Date().toISOString()
-          });
-          localStorage.setItem(threadMessagesKey, JSON.stringify(existingMessages));
-          console.log(`✅ Saved user message to thread ${threadId}`);
-        }
-      }
-    } catch (error) {
-      console.error('Error saving to localStorage:', error);
-    }
-  }
+  // Note: Removed localStorage code since it doesn't work in API routes (server-side)
+  // localStorage is only available in the browser, not in server-side API routes
 
   const result = streamText({
     model: google("gemini-2.0-flash"),
     messages: messagesWithSystem,
-    onFinish: async (completion) => {
-      // ✅ Save assistant response to thread-specific storage
-      if (threadId && completion.text) {
-        try {
-          const threadMessagesKey = `thread_messages_${threadId}`;
-          const existingMessages = JSON.parse(localStorage.getItem(threadMessagesKey) || '[]');
-          
-          existingMessages.push({
-            role: 'assistant',
-            content: completion.text,
-            timestamp: new Date().toISOString()
-          });
-          
-          localStorage.setItem(threadMessagesKey, JSON.stringify(existingMessages));
-          console.log(`✅ Saved assistant response to thread ${threadId}`);
-        } catch (error) {
-          console.error('Error saving assistant response:', error);
-        }
-      }
-    }
   });
 
   return result.toDataStreamResponse();
