@@ -5,7 +5,7 @@ import { streamText } from "ai";
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const { messages, userProfile, threadId } = await req.json(); // Removed unused 'role'
+  const { messages, userProfile, threadId } = await req.json(); // Completely remove 'role' from here
   
   console.log(`🚀 Chat API called for thread: ${threadId}`);
   console.log(`🚀 Received ${messages.length} messages`);
@@ -39,9 +39,6 @@ export async function POST(req: Request) {
     { role: "system", content: systemPrompt },
     ...messages,
   ];
-
-  // Note: Removed localStorage code since it doesn't work in API routes (server-side)
-  // localStorage is only available in the browser, not in server-side API routes
 
   const result = streamText({
     model: google("gemini-2.0-flash"),
