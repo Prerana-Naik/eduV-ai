@@ -2,11 +2,14 @@
 import { useState, useEffect, useRef } from "react";
 
 export default function TimerPage() {
-  const [time, setTime] = useState(300); // 5 minutes default
+  const [time, setTime] = useState(300);
   const [isActive, setIsActive] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [selectedMinutes, setSelectedMinutes] = useState(5);
+  const [hasPlayedSound, setHasPlayedSound] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const fallbackAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (isActive && !isPaused) {
@@ -17,7 +20,12 @@ export default function TimerPage() {
               clearInterval(intervalRef.current);
             }
             setIsActive(false);
-            // Play completion sound (you could add this)
+            
+            // Play completion sound when timer reaches 0
+            if (!hasPlayedSound) {
+              playCompletionSound();
+              setHasPlayedSound(true);
+            }
             return 0;
           }
           return prevTime - 1;
@@ -34,7 +42,117 @@ export default function TimerPage() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isActive, isPaused]);
+  }, [isActive, isPaused, hasPlayedSound]);
+
+  const playCompletionSound = () => {
+    try {
+      // Initialize AudioContext if not already done
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      
+      const context = audioContextRef.current;
+      const oscillator = context.createOscillator();
+      const gainNode = context.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(context.destination);
+      
+      // Create a positive completion melody (ascending scale)
+      const now = context.currentTime;
+      const duration = 4; // 4 seconds total
+      
+      oscillator.type = "sine";
+      
+      // Positive ascending scale notes (C major scale)
+      const notes = [523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50]; // C5 to C6
+      const noteDuration = 0.3;
+      const pauseDuration = 0.1;
+      
+      gainNode.gain.setValueAtTime(0, now);
+      
+      let currentTime = now;
+      
+      // Play ascending scale
+      for (let i = 0; i < notes.length; i++) {
+        oscillator.frequency.setValueAtTime(notes[i], currentTime);
+        
+        // Fade in
+        gainNode.gain.setValueAtTime(0, currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.3, currentTime + 0.05);
+        
+        // Fade out
+        gainNode.gain.setValueAtTime(0.3, currentTime + noteDuration - 0.05);
+        gainNode.gain.linearRampToValueAtTime(0, currentTime + noteDuration);
+        
+        currentTime += noteDuration + pauseDuration;
+      }
+      
+      // Final celebratory chord
+      setTimeout(() => {
+        try {
+          const chordOscillator1 = context.createOscillator();
+          const chordOscillator2 = context.createOscillator();
+          const chordGain = context.createGain();
+          
+          chordOscillator1.connect(chordGain);
+          chordOscillator2.connect(chordGain);
+          chordGain.connect(context.destination);
+          
+          chordOscillator1.type = "sine";
+          chordOscillator2.type = "sine";
+          chordOscillator1.frequency.setValueAtTime(659.25, 0); // E5
+          chordOscillator2.frequency.setValueAtTime(523.25, 0); // C5
+          
+          chordGain.gain.setValueAtTime(0, 0);
+          chordGain.gain.linearRampToValueAtTime(0.1, 0.1);
+          chordGain.gain.exponentialRampToValueAtTime(0.001, 1.5);
+          
+          chordOscillator1.start();
+          chordOscillator2.start();
+          chordOscillator1.stop(1.5);
+          chordOscillator2.stop(1.5);
+        } catch (e) {
+          console.log("Chord playback failed:", e);
+        }
+      }, (notes.length * (noteDuration + pauseDuration)) * 1000);
+      
+      oscillator.start(now);
+      oscillator.stop(now + duration);
+      
+    } catch (error) {
+      console.log("Sound playback failed:", error);
+      // Fallback to using external sound
+      fallbackSound();
+    }
+  };
+
+  const fallbackSound = () => {
+    // Stop any existing fallback sound
+    if (fallbackAudioRef.current) {
+      fallbackAudioRef.current.pause();
+      fallbackAudioRef.current.currentTime = 0;
+    }
+    
+    // Positive completion sound - gentle wind chime/positive notification
+    fallbackAudioRef.current = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3");
+    fallbackAudioRef.current.volume = 3.5;
+    
+    const playAlarm = () => {
+      if (fallbackAudioRef.current) {
+        fallbackAudioRef.current.currentTime = 0;
+        fallbackAudioRef.current.play().catch(e => console.log("Fallback sound play failed:", e));
+      }
+    };
+    
+    // Play once (no looping needed for this positive sound)
+    playAlarm();
+  };
+
+  // Test sound function
+  const testSound = () => {
+    playCompletionSound();
+  };
 
   const formatTime = (timeInSeconds: number) => {
     const hours = Math.floor(timeInSeconds / 3600);
@@ -53,6 +171,7 @@ export default function TimerPage() {
     }
     setIsActive(true);
     setIsPaused(false);
+    setHasPlayedSound(false);
   };
 
   const handlePause = () => {
@@ -70,12 +189,20 @@ export default function TimerPage() {
     setIsActive(false);
     setIsPaused(false);
     setTime(selectedMinutes * 60);
+    setHasPlayedSound(false);
+    
+    // Stop any currently playing sound
+    if (fallbackAudioRef.current) {
+      fallbackAudioRef.current.pause();
+      fallbackAudioRef.current.currentTime = 0;
+    }
   };
 
   const handleTimeChange = (minutes: number) => {
     setSelectedMinutes(minutes);
     if (!isActive) {
       setTime(minutes * 60);
+      setHasPlayedSound(false);
     }
   };
 
@@ -89,7 +216,7 @@ export default function TimerPage() {
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold text-indigo-800 drop-shadow-md flex items-center gap-2">
               <span className="text-4xl">⏱️</span>
-              Elegant Timer
+              Focus Timer
             </h1>
             <div className={`px-4 py-2 rounded-full text-sm font-medium ${isActive ? (isPaused ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800') : 'bg-indigo-100 text-indigo-800'}`}>
               {isActive ? (isPaused ? '⏸️ Paused' : '▶️ Running') : '⏹️ Ready'}
@@ -107,6 +234,17 @@ export default function TimerPage() {
             <div className="text-7xl font-mono font-bold text-white text-center relative z-10">
               {formatTime(time)}
             </div>
+            
+            {/* Completion indicator */}
+            {time === 0 && isActive === false && (
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center">
+                <div className="text-white text-center">
+                  <div className="text-6xl mb-4">🎉</div>
+                  <div className="text-2xl font-bold">Great Job! Completed!</div>
+                  <div className="text-lg mt-2 opacity-90">Celebrating your achievement...</div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Progress indicator */}
@@ -156,7 +294,7 @@ export default function TimerPage() {
                   onClick={handleStart}
                   className="col-span-3 px-6 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl text-lg font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all transform hover:scale-105 shadow-lg shadow-emerald-200"
                 >
-                  🚀 Start Timer
+                  🚀 Start Focus Session
                 </button>
               ) : isPaused ? (
                 <>
@@ -164,13 +302,13 @@ export default function TimerPage() {
                     onClick={handleResume}
                     className="col-span-2 px-4 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl text-lg font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all transform hover:scale-105 shadow-lg shadow-emerald-200"
                   >
-                    ▶️ Resume
+                    ▶️ Continue Focus
                   </button>
                   <button
                     onClick={handleReset}
                     className="px-4 py-4 bg-gradient-to-r from-indigo-100 to-indigo-200 text-indigo-700 rounded-xl text-lg font-semibold hover:from-indigo-200 hover:to-indigo-300 transition-all transform hover:scale-105 shadow-md"
                   >
-                    🔄 Reset
+                    🔄 New Session
                   </button>
                 </>
               ) : (
@@ -179,13 +317,13 @@ export default function TimerPage() {
                     onClick={handlePause}
                     className="col-span-2 px-4 py-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl text-lg font-semibold hover:from-amber-600 hover:to-orange-700 transition-all transform hover:scale-105 shadow-lg shadow-amber-200"
                   >
-                    ⏸️ Pause
+                    ⏸️ Pause Focus
                   </button>
                   <button
                     onClick={handleReset}
                     className="px-4 py-4 bg-gradient-to-r from-indigo-100 to-indigo-200 text-indigo-700 rounded-xl text-lg font-semibold hover:from-indigo-200 hover:to-indigo-300 transition-all transform hover:scale-105 shadow-md"
                   >
-                    🔄 Reset
+                    🔄 End Session
                   </button>
                 </>
               )}
@@ -196,13 +334,13 @@ export default function TimerPage() {
           <div className="bg-indigo-50 p-5 rounded-2xl shadow-inner">
             <h3 className="text-lg font-semibold text-indigo-800 mb-3">Custom Time</h3>
             <label className="block text-indigo-700 mb-4">
-              Set time (1-120 minutes):
+              Set focus time (1-180 minutes):
             </label>
             <div className="flex items-center gap-5">
               <input
                 type="range"
                 min="1"
-                max="120"
+                max="180"
                 value={selectedMinutes}
                 onChange={(e) => handleTimeChange(parseInt(e.target.value))}
                 className="flex-grow h-3 bg-indigo-200 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-indigo-600 [&::-webkit-slider-thumb]:border-0 [&::-webkit-slider-thumb]:cursor-grab"
@@ -227,6 +365,16 @@ export default function TimerPage() {
               </div>
               <div className="text-2xl font-bold text-indigo-800">{formatTime(time)}</div>
             </div>
+          </div>
+
+          {/* Sound Test Button */}
+          <div className="flex justify-center mt-2">
+            <button
+              onClick={testSound}
+              className="px-4 py-2 bg-gradient-to-r from-green-100 to-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:from-green-200 hover:to-emerald-200 transition-colors border border-emerald-200"
+            >
+              🎵 Test  Sound
+            </button>
           </div>
         </div>
       </div>
