@@ -240,8 +240,6 @@ export default function TimerPage() {
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center">
                 <div className="text-white text-center">
                   <div className="text-6xl mb-4">🎉</div>
-                  <div className="text-2xl font-bold">Great Job! Completed!</div>
-                  <div className="text-lg mt-2 opacity-90">Celebrating your achievement...</div>
                 </div>
               </div>
             )}
@@ -381,3 +379,4 @@ export default function TimerPage() {
     </div>
   );
 }
+
