@@ -68,22 +68,7 @@ export function AppSidebar({
 
       <SidebarSeparator />
 
-      {/* <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <User className="size-4" />
-              <span className="capitalize">{userProfile?.role || userMode} Mode</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <Settings className="size-4" />
-              <span>Settings</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter> */}
+      
     </Sidebar>
   );
 }
