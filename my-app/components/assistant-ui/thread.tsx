@@ -217,8 +217,8 @@ const getSuggestionsForRole = (role: string, userProfile?: UserProfile | null) =
       },
       {
         title: "Student assessment",
-        label: "methods and rubrics",
-        action: `Help me create assessment methods and rubrics for ${subject}.`,
+        label: "methods",
+        action: `Help me create assessment methods for ${subject}.`,
       },
       {
         title: "Classroom management",
