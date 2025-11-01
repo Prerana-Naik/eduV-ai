@@ -268,20 +268,8 @@ export default function Assistant() {
                     title={isTextToSpeechEnabled ? "Disable text-to-speech" : "Enable text-to-speech"}
                   >
                     {isTextToSpeechEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-                    speaker {isTextToSpeechEnabled ? "On" : "Off"}
+                    Speaker {isTextToSpeechEnabled ? "On" : "Off"}
                   </button>
-
-                  {/* Stop Speech Button - Only show when TTS is enabled
-                  {isTextToSpeechEnabled && (
-                    <button
-                      onClick={stopSpeech}
-                      className="flex items-center gap-2 px-3 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                      title="Stop speech"
-                    >
-                      <VolumeX className="h-4 w-4" />
-                      Stop
-                    </button>
-                  )} */}
 
                   <div className="px-4 py-1.5 rounded bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-200/50 backdrop-blur-sm">
                     <span className="text-xs font-medium text-green-700">
@@ -320,12 +308,7 @@ export default function Assistant() {
                             Personalized learning experience for {user.name}
                           </p>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
-                          <span className="text-xs text-gray-400 font-medium">
-                            Online
-                          </span>
-                        </div>
+                       
                       </div>
                     </div>
 
@@ -337,8 +320,8 @@ export default function Assistant() {
                           variant="modern"
                           userProfile={profile}
                           key={activeThreadId}
-                          onSpeakText={speakText} // Pass TTS function to Thread
-                          isTextToSpeechEnabled={isTextToSpeechEnabled} // Pass TTS state
+                          onSpeakText={speakText}
+                          isTextToSpeechEnabled={isTextToSpeechEnabled}
                         />
                         <div ref={bottomRef} />
                       </div>
@@ -349,7 +332,7 @@ export default function Assistant() {
                 <div className="px-4 py-1 bg-white/30 backdrop-blur-sm border-t border-gray-200/20 flex-shrink-0">
                   <div className="flex items-center justify-center">
                     <p className="text-xs text-gray-400 text-center leading-none">
-                      Powered by AI • v2.1 {isTextToSpeechEnabled}
+                      Powered by AI • v2.2 • Enhanced with History
                     </p>
                   </div>
                 </div>
