@@ -21,6 +21,7 @@ export default function Assistant() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [mode, setMode] = useState<"student" | "teacher">("student");
   const [isHydrated, setIsHydrated] = useState(false);
+  const [currentConversationId, setCurrentConversationId] = useState<string>();
   const [chatResetFlag, setChatResetFlag] = useState(false);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -90,6 +91,7 @@ export default function Assistant() {
     stopSpeech();
     const newThreadId = `thread_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     setActiveThreadId(newThreadId);
+    setCurrentConversationId(newThreadId);
     setChatResetFlag((prev) => !prev);
   }, [stopSpeech]);
 
@@ -97,6 +99,7 @@ export default function Assistant() {
     (threadId: string, convMode: "student" | "teacher") => {
       stopSpeech();
       setActiveThreadId(threadId);
+      setCurrentConversationId(threadId);
       setMode(convMode);
       setChatResetFlag((prev) => !prev);
     },
@@ -112,6 +115,28 @@ export default function Assistant() {
   const handleSwitchProfile = useCallback(() => {
     setShowProfileModal(true);
   }, []);
+
+  const handleModeToggle = useCallback(async () => {
+    const newMode = mode === "student" ? "teacher" : "student";
+
+    if (profile && profile.id) {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .update({ role: newMode })
+          .eq("id", profile.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        setProfile(data);
+        setMode(newMode);
+      } catch (error) {
+        console.error("Error updating role:", error);
+      }
+    }
+  }, [mode, profile]);
 
   useEffect(() => {
     const checkAuthAndProfile = async () => {
@@ -176,6 +201,15 @@ export default function Assistant() {
 
   return (
     <>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet"
+      />
+      <link
+        href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+        rel="stylesheet"
+      />
+
       <AssistantRuntimeProvider runtime={runtime}>
         <SidebarProvider>
           <div className="flex h-dvh w-full overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 relative">
@@ -206,7 +240,7 @@ export default function Assistant() {
                     className="relative group"
                     title="Profile & Settings"
                   >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm shadow-lg transition-transform group-hover:scale-105">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm shadow-lg animate__animated animate__fadeIn transition-transform group-hover:scale-105">
                       {user.name ? user.name.charAt(0).toUpperCase() : "?"}
                     </div>
                     <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
@@ -236,6 +270,18 @@ export default function Assistant() {
                     {isTextToSpeechEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
                     speaker {isTextToSpeechEnabled ? "On" : "Off"}
                   </button>
+
+                  {/* Stop Speech Button - Only show when TTS is enabled
+                  {isTextToSpeechEnabled && (
+                    <button
+                      onClick={stopSpeech}
+                      className="flex items-center gap-2 px-3 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                      title="Stop speech"
+                    >
+                      <VolumeX className="h-4 w-4" />
+                      Stop
+                    </button>
+                  )} */}
 
                   <div className="px-4 py-1.5 rounded bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-200/50 backdrop-blur-sm">
                     <span className="text-xs font-medium text-green-700">
@@ -291,6 +337,8 @@ export default function Assistant() {
                           variant="modern"
                           userProfile={profile}
                           key={activeThreadId}
+                          onSpeakText={speakText} // Pass TTS function to Thread
+                          isTextToSpeechEnabled={isTextToSpeechEnabled} // Pass TTS state
                         />
                         <div ref={bottomRef} />
                       </div>
@@ -301,7 +349,7 @@ export default function Assistant() {
                 <div className="px-4 py-1 bg-white/30 backdrop-blur-sm border-t border-gray-200/20 flex-shrink-0">
                   <div className="flex items-center justify-center">
                     <p className="text-xs text-gray-400 text-center leading-none">
-                      Powered by AI • v2.1
+                      Powered by AI • v2.1 {isTextToSpeechEnabled}
                     </p>
                   </div>
                 </div>
@@ -320,4 +368,3 @@ export default function Assistant() {
     </>
   );
 }
-
