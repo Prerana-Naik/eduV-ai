@@ -65,6 +65,280 @@ type ThreadProps = {
   isTextToSpeechEnabled?: boolean;
 };
 
+// Add this helper function at the TOP
+const copyToClipboard = async (text: string): Promise<boolean> => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (err) {
+    console.error('Failed to copy:', err);
+    return false;
+  }
+};
+
+// History Modal Component WITH COPY FUNCTIONALITY - FIXED VERSION
+const HistoryModal: FC<{ userId: string | null; onClose: () => void }> = ({ userId, onClose }) => {
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [copiedItemId, setCopiedItemId] = useState<string | null>(null); // Add this state
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchHistory = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("history")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setHistory(data || []);
+      } catch (error) {
+        console.error("Error fetching history:", error);
+        alert("Error loading history");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [userId]);
+
+  const deleteHistoryItem = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this conversation?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("history")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      
+      setHistory(history.filter(item => item.id !== id));
+      if (selectedItem?.id === id) setSelectedItem(null);
+      alert("✅ Conversation deleted");
+    } catch (error) {
+      console.error("Error deleting history:", error);
+      alert("Error deleting conversation");
+    }
+  };
+
+  const handleCopyConversation = async () => {
+    if (!selectedItem) return;
+    
+    const success = await copyToClipboard(selectedItem.content);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } else {
+      alert("Failed to copy conversation");
+    }
+  };
+
+  // DETAILED VIEW (when a conversation is selected)
+  if (selectedItem) {
+    return (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+        >
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <button
+              onClick={() => setSelectedItem(null)}
+              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition"
+            >
+              ← Back
+            </button>
+            <h2 className="text-xl font-semibold text-gray-900 truncate max-w-md">{selectedItem.title}</h2>
+            <div className="flex gap-2">
+              {/* COPY BUTTON - Main copy functionality */}
+              <button
+                onClick={handleCopyConversation}
+                className={`px-4 py-2 rounded-lg transition flex items-center gap-2 ${
+                  copied 
+                    ? "bg-green-500 text-white" 
+                    : "bg-blue-500 text-white hover:bg-blue-600"
+                }`}
+                title="Copy entire conversation"
+              >
+                {copied ? (
+                  <>
+                    <CheckIcon className="w-4 h-4" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <CopyIcon className="w-4 h-4" />
+                    Copy
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => deleteHistoryItem(selectedItem.id)}
+                className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6">
+            <p className="text-xs text-gray-500 mb-4">
+              {new Date(selectedItem.created_at).toLocaleString()}
+            </p>
+            <div className="whitespace-pre-wrap text-gray-700 leading-relaxed text-sm">
+              {selectedItem.content.split("\n").map((line, i) => (
+                <div key={i} className={line.startsWith("**") ? "font-semibold mt-3" : ""}>
+                  {line.replace(/\*\*/g, "")}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200 p-4 bg-gray-50 flex justify-end gap-2">
+            <button
+              onClick={() => setSelectedItem(null)}
+              className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition"
+            >
+              Close
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // LIST VIEW (showing all conversations)
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+      >
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <h2 className="text-2xl font-bold text-gray-900">Conversation History</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-2xl"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+          ) : history.length === 0 ? (
+            <div className="text-center py-12">
+              <History className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No conversations saved yet</p>
+            </div>
+          ) : (
+            <div className="grid gap-3">
+              {history.map((item) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 border border-gray-200 rounded-lg hover:border-blue-400 hover:shadow-md transition cursor-pointer group"
+                  onClick={() => setSelectedItem(item)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 truncate group-hover:text-blue-600 transition">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(item.created_at).toLocaleString()}
+                      </p>
+                      <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                        {item.content.substring(0, 100)}...
+                      </p>
+                    </div>
+                    
+                    {/* ACTION BUTTONS - Copy, View, Delete */}
+                    <div className="flex gap-2 ml-4 opacity-0 group-hover:opacity-100 transition">
+                      {/* COPY BUTTON - Quick copy from list view - FIXED */}
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          const success = await copyToClipboard(item.content);
+                          if (success) {
+                            setCopiedItemId(item.id);
+                            setTimeout(() => setCopiedItemId(null), 1500);
+                          } else {
+                            alert("Failed to copy conversation");
+                          }
+                        }}
+                        className={`p-2 rounded-lg transition flex items-center justify-center ${
+                          copiedItemId === item.id
+                            ? "bg-green-500 text-white"
+                            : "text-green-600 hover:bg-green-50"
+                        }`}
+                        title="Copy conversation"
+                      >
+                        {copiedItemId === item.id ? (
+                          <CheckIcon className="w-4 h-4" />
+                        ) : (
+                          <CopyIcon className="w-4 h-4" />
+                        )}
+                      </button>
+
+                      {/* VIEW BUTTON */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedItem(item);
+                        }}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                        title="View full conversation"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </button>
+
+                      {/* DELETE BUTTON */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteHistoryItem(item.id);
+                        }}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                        title="Delete conversation"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="border-t border-gray-200 p-4 bg-gray-50 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+          >
+            Close
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 export const Thread: FC<ThreadProps> = ({ 
   userEmail = "guest@example.com", 
   userRole = "student",
@@ -161,15 +435,19 @@ export const Thread: FC<ThreadProps> = ({
           ["--thread-max-width" as string]: "42rem",
         }}
       >
-        {/* Save & View History Buttons */}
+        {/* Save & View History Buttons - BOTH IN THREAD COMPONENT */}
         <div className="absolute top-4 right-4 z-10 flex gap-2">
+          {/* VIEW HISTORY BUTTON WITH COPY FUNCTIONALITY */}
           <button
             onClick={() => setShowHistoryModal(true)}
             className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg shadow-md transition flex items-center gap-2 text-sm"
+            title="View conversation history with copy functionality"
           >
             <Eye className="w-4 h-4" />
             View History
           </button>
+          
+          {/* SAVE BUTTON */}
           <button
             onClick={saveToHistory}
             disabled={isSavingToHistory}
@@ -235,7 +513,7 @@ export const Thread: FC<ThreadProps> = ({
         </ThreadPrimitive.Viewport>
       </ThreadPrimitive.Root>
 
-      {/* History Modal */}
+      {/* History Modal WITH COPY FUNCTIONALITY */}
       {showHistoryModal && (
         <HistoryModal 
           userId={userId} 
@@ -243,198 +521,6 @@ export const Thread: FC<ThreadProps> = ({
         />
       )}
     </>
-  );
-};
-
-// History Modal Component
-const HistoryModal: FC<{ userId: string | null; onClose: () => void }> = ({ userId, onClose }) => {
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
-
-  useEffect(() => {
-    if (!userId) return;
-
-    const fetchHistory = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("history")
-          .select("*")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        setHistory(data || []);
-      } catch (error) {
-        console.error("Error fetching history:", error);
-        alert("Error loading history");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHistory();
-  }, [userId]);
-
-  const deleteHistoryItem = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this conversation?")) return;
-
-    try {
-      const { error } = await supabase
-        .from("history")
-        .delete()
-        .eq("id", id);
-
-      if (error) throw error;
-      
-      setHistory(history.filter(item => item.id !== id));
-      if (selectedItem?.id === id) setSelectedItem(null);
-      alert("✅ Conversation deleted");
-    } catch (error) {
-      console.error("Error deleting history:", error);
-      alert("Error deleting conversation");
-    }
-  };
-
-  if (selectedItem) {
-    return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col"
-        >
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <button
-              onClick={() => setSelectedItem(null)}
-              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition"
-            >
-              ← Back
-            </button>
-            <h2 className="text-xl font-semibold text-gray-900">{selectedItem.title}</h2>
-            <button
-              onClick={() => deleteHistoryItem(selectedItem.id)}
-              className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition flex items-center gap-2"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-6">
-            <p className="text-xs text-gray-500 mb-4">
-              {new Date(selectedItem.created_at).toLocaleString()}
-            </p>
-            <div className="whitespace-pre-wrap text-gray-700 leading-relaxed text-sm">
-              {selectedItem.content.split("\n").map((line, i) => (
-                <div key={i} className={line.startsWith("**") ? "font-semibold mt-3" : ""}>
-                  {line.replace(/\*\*/g, "")}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="border-t border-gray-200 p-4 bg-gray-50 flex justify-end gap-2">
-            <button
-              onClick={() => setSelectedItem(null)}
-              className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition"
-            >
-              Close
-            </button>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col"
-      >
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
-          <h2 className="text-2xl font-bold text-gray-900">Conversation History</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-            </div>
-          ) : history.length === 0 ? (
-            <div className="text-center py-12">
-              <History className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No conversations saved yet</p>
-            </div>
-          ) : (
-            <div className="grid gap-3">
-              {history.map((item) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-4 border border-gray-200 rounded-lg hover:border-blue-400 hover:shadow-md transition cursor-pointer group"
-                  onClick={() => setSelectedItem(item)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 truncate group-hover:text-blue-600 transition">
-                        {item.title}
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {new Date(item.created_at).toLocaleString()}
-                      </p>
-                      <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                        {item.content.substring(0, 100)}...
-                      </p>
-                    </div>
-                    <div className="flex gap-2 ml-4 opacity-0 group-hover:opacity-100 transition">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedItem(item);
-                        }}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                        title="View"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteHistoryItem(item.id);
-                        }}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="border-t border-gray-200 p-4 bg-gray-50 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-          >
-            Close
-          </button>
-        </div>
-      </motion.div>
-    </div>
   );
 };
 
