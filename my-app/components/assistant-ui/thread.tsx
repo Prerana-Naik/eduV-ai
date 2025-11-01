@@ -1,3 +1,5 @@
+"use client";
+
 import {
   ThreadPrimitive,
   ComposerPrimitive,
@@ -5,6 +7,7 @@ import {
   ActionBarPrimitive,
   BranchPickerPrimitive,
   ErrorPrimitive,
+  useThread,
 } from "@assistant-ui/react";
 import { useState, useEffect, type FC } from "react";
 import {
@@ -19,6 +22,11 @@ import {
   ChevronRightIcon,
   Square,
   SendHorizontalIcon,
+  Volume2,
+  History,
+  Trash2,
+  Eye,
+  ExternalLink,
 } from "lucide-react";
 
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
@@ -27,9 +35,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { MarkdownText } from "./markdown-text";
 import { ToolFallback } from "./tool-fallback";
+import { supabase } from "@/lib/supabaseClient";
 
-// User Profile Type
 type UserProfile = {
+  id?: string;
   name: string;
   role: string;
   age: number | string;
@@ -39,19 +48,12 @@ type UserProfile = {
   email?: string;
 };
 
-// Utility functions for per-user message storage
-const getMessagesKey = (email: string) => `assistant_messages_${email}`;
-
-export const saveMessage = (email: string, msg: any) => {
-  const key = getMessagesKey(email);
-  const messages = JSON.parse(localStorage.getItem(key) || "[]");
-  messages.push(msg);
-  localStorage.setItem(key, JSON.stringify(messages));
-};
-
-export const loadMessages = (email: string) => {
-  const key = getMessagesKey(email);
-  return JSON.parse(localStorage.getItem(key) || "[]");
+type HistoryItem = {
+  id: string;
+  title: string;
+  content: string;
+  created_at: string;
+  user_id: string;
 };
 
 type ThreadProps = {
@@ -59,53 +61,380 @@ type ThreadProps = {
   userRole?: string;
   variant?: "modern" | "classic";
   userProfile?: UserProfile | null;
+  onSpeakText?: (text: string) => void;
+  isTextToSpeechEnabled?: boolean;
 };
 
 export const Thread: FC<ThreadProps> = ({ 
   userEmail = "guest@example.com", 
   userRole = "student",
   variant = "modern",
-  userProfile = null
+  userProfile = null,
+  onSpeakText,
+  isTextToSpeechEnabled = false
 }) => {
+  const { messages } = useThread();
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isSavingToHistory, setIsSavingToHistory] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const { data } = await supabase.auth.getUser();
+        setUserId(data.user?.id || null);
+      } catch (error) {
+        console.error("Error getting user:", error);
+      }
+    };
+    getUser();
+  }, []);
+
+  const saveToHistory = async () => {
+    if (!userId) {
+      alert("Please log in to save conversations to History");
+      return;
+    }
+
+    if (messages.length === 0) {
+      alert("No conversation to save");
+      return;
+    }
+
+    setIsSavingToHistory(true);
+    try {
+      const conversationText = messages
+        .map(msg => {
+          const role = msg.role === "user" ? "You" : "Assistant";
+          const content = msg.content[0]?.type === "text" 
+            ? msg.content[0].text 
+            : "[Media content]";
+          return `**${role}:** ${content}`;
+        })
+        .join("\n\n");
+
+      const historyContent = `# Chat Conversation\n\n*Saved on ${new Date().toLocaleString()}*\n\n---\n\n${conversationText}`;
+      
+      const { data, error } = await supabase
+        .from("history")
+        .insert([
+          { 
+            user_id: userId, 
+            content: historyContent,
+            title: `Chat - ${new Date().toLocaleString()}`
+          }
+        ])
+        .select()
+        .single();
+
+      if (error) throw error;
+      alert("✅ Conversation saved to History!");
+      
+    } catch (error) {
+      console.error("Error saving to history:", error);
+      alert("Error saving to History. Please try again.");
+    } finally {
+      setIsSavingToHistory(false);
+    }
+  };
+
   const bgColor = variant === "modern" ? "bg-[#f7f6f3]" : "bg-background";
-  
+
+  const handleSpeakAssistantMessage = (content: string) => {
+    if (isTextToSpeechEnabled && onSpeakText) {
+      const cleanContent = content
+        .replace(/[#*`~]/g, "")
+        .replace(/\n/g, " ")
+        .trim();
+      
+      if (cleanContent) {
+        onSpeakText(cleanContent);
+      }
+    }
+  };
+
   return (
-    <ThreadPrimitive.Root
-      className={`${bgColor} box-border flex h-full flex-col overflow-hidden`}
-      style={{
-        ["--thread-max-width" as string]: "42rem",
-      }}
-    >
-      <ThreadPrimitive.Viewport
-        className={`flex h-full flex-col items-center overflow-y-scroll scroll-smooth bg-inherit px-4 pt-8 ${
-          variant === "modern" 
-            ? "scrollbar-color-[#bfc8d0_#f7f6f3] scrollbar-thin"
-            : ""
-        }`}
-        style={variant === "modern" ? {
-          scrollbarColor: "#bfc8d0 #f7f6f3",
-          scrollbarWidth: "thin",
-        } : {}}
+    <>
+      <ThreadPrimitive.Root
+        className={`${bgColor} box-border flex h-full flex-col overflow-hidden`}
+        style={{
+          ["--thread-max-width" as string]: "42rem",
+        }}
       >
-        <ThreadWelcome variant={variant} userRole={userRole} userProfile={userProfile} />
-<ThreadPrimitive.Messages
-  components={{
-    UserMessage: (props) => <UserMessage {...props} variant={variant} />,
-    EditComposer: (props) => <EditComposer {...props} variant={variant} />,
-    AssistantMessage: (props) => <AssistantMessage {...props} variant={variant} userProfile={userProfile} />,
-  }}
-/>
-
-        <ThreadPrimitive.If empty={false}>
-          <div className="min-h-8 flex-grow" />
-        </ThreadPrimitive.If>
-
-        <div className="sticky bottom-0 mt-3 flex w-full max-w-[var(--thread-max-width)] flex-col items-center justify-end rounded-t-lg bg-inherit pb-4">
-          <ThreadScrollToBottom variant={variant} />
-          <Composer userRole={userRole} variant={variant} userProfile={userProfile} />
+        {/* Save & View History Buttons */}
+        <div className="absolute top-4 right-4 z-10 flex gap-2">
+          <button
+            onClick={() => setShowHistoryModal(true)}
+            className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg shadow-md transition flex items-center gap-2 text-sm"
+          >
+            <Eye className="w-4 h-4" />
+            View History
+          </button>
+          <button
+            onClick={saveToHistory}
+            disabled={isSavingToHistory}
+            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-4 py-2 rounded-lg shadow-md transition flex items-center gap-2 text-sm disabled:opacity-50"
+          >
+            {isSavingToHistory ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Saving...
+              </>
+            ) : (
+              <>
+                <History className="w-4 h-4" />
+                Save
+              </>
+            )}
+          </button>
         </div>
-      </ThreadPrimitive.Viewport>
-    </ThreadPrimitive.Root>
+
+        <ThreadPrimitive.Viewport
+          className={`flex h-full flex-col items-center overflow-y-scroll scroll-smooth bg-inherit px-4 pt-8`}
+          style={variant === "modern" ? {
+            scrollbarColor: "#bfc8d0 #f7f6f3",
+            scrollbarWidth: "thin",
+          } : {}}
+        >
+          <ThreadWelcome variant={variant} userRole={userRole} userProfile={userProfile} />
+          <ThreadPrimitive.Messages
+            components={{
+              UserMessage: (props) => (
+                <UserMessage 
+                  {...props} 
+                  variant={variant}
+                  onSpeakText={onSpeakText}
+                  isTextToSpeechEnabled={isTextToSpeechEnabled}
+                />
+              ),
+              EditComposer: (props) => <EditComposer {...props} variant={variant} />,
+              AssistantMessage: (props) => (
+                <AssistantMessage 
+                  {...props} 
+                  variant={variant} 
+                  userProfile={userProfile}
+                  onSpeak={handleSpeakAssistantMessage}
+                  isTextToSpeechEnabled={isTextToSpeechEnabled}
+                />
+              ),
+            }}
+          />
+
+          <ThreadPrimitive.If empty={false}>
+            <div className="min-h-8 flex-grow" />
+          </ThreadPrimitive.If>
+
+          <div className="sticky bottom-0 mt-3 flex w-full max-w-[var(--thread-max-width)] flex-col items-center justify-end rounded-t-lg bg-inherit pb-4">
+            <ThreadScrollToBottom variant={variant} />
+            <Composer 
+              userRole={userRole} 
+              variant={variant} 
+              userProfile={userProfile}
+            />
+          </div>
+        </ThreadPrimitive.Viewport>
+      </ThreadPrimitive.Root>
+
+      {/* History Modal */}
+      {showHistoryModal && (
+        <HistoryModal 
+          userId={userId} 
+          onClose={() => setShowHistoryModal(false)} 
+        />
+      )}
+    </>
+  );
+};
+
+// History Modal Component
+const HistoryModal: FC<{ userId: string | null; onClose: () => void }> = ({ userId, onClose }) => {
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState<HistoryItem | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchHistory = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("history")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setHistory(data || []);
+      } catch (error) {
+        console.error("Error fetching history:", error);
+        alert("Error loading history");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHistory();
+  }, [userId]);
+
+  const deleteHistoryItem = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this conversation?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("history")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+      
+      setHistory(history.filter(item => item.id !== id));
+      if (selectedItem?.id === id) setSelectedItem(null);
+      alert("✅ Conversation deleted");
+    } catch (error) {
+      console.error("Error deleting history:", error);
+      alert("Error deleting conversation");
+    }
+  };
+
+  if (selectedItem) {
+    return (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+        >
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <button
+              onClick={() => setSelectedItem(null)}
+              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition"
+            >
+              ← Back
+            </button>
+            <h2 className="text-xl font-semibold text-gray-900">{selectedItem.title}</h2>
+            <button
+              onClick={() => deleteHistoryItem(selectedItem.id)}
+              className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6">
+            <p className="text-xs text-gray-500 mb-4">
+              {new Date(selectedItem.created_at).toLocaleString()}
+            </p>
+            <div className="whitespace-pre-wrap text-gray-700 leading-relaxed text-sm">
+              {selectedItem.content.split("\n").map((line, i) => (
+                <div key={i} className={line.startsWith("**") ? "font-semibold mt-3" : ""}>
+                  {line.replace(/\*\*/g, "")}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200 p-4 bg-gray-50 flex justify-end gap-2">
+            <button
+              onClick={() => setSelectedItem(null)}
+              className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition"
+            >
+              Close
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col"
+      >
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <h2 className="text-2xl font-bold text-gray-900">Conversation History</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 text-2xl"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            </div>
+          ) : history.length === 0 ? (
+            <div className="text-center py-12">
+              <History className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No conversations saved yet</p>
+            </div>
+          ) : (
+            <div className="grid gap-3">
+              {history.map((item) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 border border-gray-200 rounded-lg hover:border-blue-400 hover:shadow-md transition cursor-pointer group"
+                  onClick={() => setSelectedItem(item)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 truncate group-hover:text-blue-600 transition">
+                        {item.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(item.created_at).toLocaleString()}
+                      </p>
+                      <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                        {item.content.substring(0, 100)}...
+                      </p>
+                    </div>
+                    <div className="flex gap-2 ml-4 opacity-0 group-hover:opacity-100 transition">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedItem(item);
+                        }}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                        title="View"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteHistoryItem(item.id);
+                        }}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="border-t border-gray-200 p-4 bg-gray-50 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+          >
+            Close
+          </button>
+        </div>
+      </motion.div>
+    </div>
   );
 };
 
@@ -115,11 +444,7 @@ const ThreadScrollToBottom: FC<{ variant?: "modern" | "classic" }> = ({ variant 
       <TooltipIconButton
         tooltip="Scroll to bottom"
         variant="outline"
-        className={
-          variant === "modern"
-            ? "dark:bg-background dark:hover:bg-accent absolute -top-12 z-10 self-center rounded-full p-4 disabled:invisible"
-            : "absolute -top-8 rounded-full disabled:invisible"
-        }
+        className="absolute -top-12 z-10 self-center rounded-full p-4 disabled:invisible"
       >
         <ArrowDownIcon />
       </TooltipIconButton>
@@ -127,69 +452,48 @@ const ThreadScrollToBottom: FC<{ variant?: "modern" | "classic" }> = ({ variant 
   );
 };
 
-const ThreadWelcome: FC<{ 
-  variant?: "modern" | "classic"; 
-  userRole?: string;
-  userProfile?: UserProfile | null;
-}> = ({ 
+const ThreadWelcome: FC<{ variant?: "modern" | "classic"; userRole?: string; userProfile?: UserProfile | null }> = ({ 
   variant = "modern", 
   userRole = "student",
   userProfile = null
 }) => {
-  // Use profile name if available
   const userName = userProfile?.name || "there";
   
   return (
     <ThreadPrimitive.Empty>
-      <div className="mx-auto flex w-full max-w-[var(--thread-max-width)] flex-grow flex-col px-[var(--thread-padding-x)]">
+      <div className="mx-auto flex w-full max-w-[var(--thread-max-width)] flex-grow flex-col px-4">
         <div className="flex w-full flex-grow flex-col items-center justify-center">
-          {variant === "modern" ? (
-            <div className="flex size-full flex-col justify-center px-8 md:mt-20">
+          <div className="flex size-full flex-col justify-center px-8 md:mt-20">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="text-2xl font-semibold"
+            >
+              Hello {userName}!
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="text-muted-foreground/65 text-xl mt-2"
+            >
+              {userProfile?.role === "teacher" 
+                ? "What would you like to create today?"
+                : "How can I help you learn today?"
+              }
+            </motion.div>
+            {userProfile && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                transition={{ delay: 0.5 }}
-                className="text-2xl font-semibold"
+                transition={{ delay: 0.7 }}
+                className="text-muted-foreground/50 text-sm mt-2"
               >
-                Hello {userName}!
+                Ready to help with {userProfile.subject} in a {userProfile?.chatStyle?.toLowerCase() || "friendly"} style.
               </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                transition={{ delay: 0.6 }}
-                className="text-muted-foreground/65 text-xxl"
-              >
-                {userProfile?.role === "teacher" 
-                  ? "What would you like to create today?"
-                  :""
-                }
-              </motion.div>
-              {userProfile && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  transition={{ delay: 0.7 }}
-                  className="text-muted-foreground/50 text-sm mt-2"
-                >
-                  I'm ready to help with {userProfile.subject} in a {userProfile?.chatStyle?.toLowerCase() || 'friendly'} style..
-                </motion.div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center">
-              <p className="mt-4 font-medium text-lg">
-                Hello {userName}! How can I help you today?
-              </p>
-              {userProfile && (
-                <p className="text-muted-foreground text-sm mt-2">
-                  Ready to assist with {userProfile.subject}
-                </p>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </div>
         <ThreadWelcomeSuggestions 
           role={userRole} 
@@ -217,8 +521,8 @@ const getSuggestionsForRole = (role: string, userProfile?: UserProfile | null) =
       },
       {
         title: "Student assessment",
-        label: "methods",
-        action: `Help me create assessment methods for ${subject}.`,
+        label: "methods and rubrics",
+        action: `Help me create assessment methods and rubrics for ${subject}.`,
       },
       {
         title: "Classroom management",
@@ -228,7 +532,6 @@ const getSuggestionsForRole = (role: string, userProfile?: UserProfile | null) =
     ];
   }
   
-  // Student suggestions based on profile
   const subject = userProfile?.subject || "your studies";
   const age = userProfile?.age;
   const ageText = age ? ` suitable for age ${age}` : "";
@@ -264,29 +567,6 @@ const ThreadWelcomeSuggestions: FC<{
 }> = ({ role = "student", variant = "modern", userProfile = null }) => {
   const suggestions = getSuggestionsForRole(role, userProfile);
 
-  if (variant === "classic") {
-    return (
-      <div className="mt-3 flex w-full items-stretch justify-center gap-4">
-        {suggestions.slice(0, 2).map((suggestion, index) => (
-          <ThreadPrimitive.Suggestion
-            key={`classic-suggestion-${index}`}
-            className="hover:bg-muted/80 flex max-w-sm grow basis-0 flex-col items-center justify-center rounded-lg border p-3 transition-colors ease-in"
-            prompt={suggestion.action}
-            method="replace"
-            autoSend
-          >
-            <span className="line-clamp-2 text-ellipsis text-sm font-semibold">
-              {suggestion.title}
-            </span>
-            <span className="line-clamp-1 text-ellipsis text-xs text-muted-foreground mt-1">
-              {suggestion.label}
-            </span>
-          </ThreadPrimitive.Suggestion>
-        ))}
-      </div>
-    );
-  }
-
   return (
     <div className="grid w-full gap-2 sm:grid-cols-2">
       {suggestions.map((suggestedAction, index) => (
@@ -306,11 +586,11 @@ const ThreadWelcomeSuggestions: FC<{
           >
             <Button
               variant="ghost"
-              className="dark:hover:bg-accent/60 h-auto w-full flex-1 flex-wrap items-start justify-start gap-1 rounded-xl border px-4 py-3.5 text-left text-sm sm:flex-col"
+              className="dark:hover:bg-accent/60 h-auto w-full flex-1 flex-wrap items-start justify-start gap-1 rounded-xl border px-4 py-3.5 text-left text-sm sm:flex-col hover:bg-blue-50 transition"
               aria-label={suggestedAction.action}
             >
               <span className="font-medium">{suggestedAction.title}</span>
-              <p className="text-muted-foreground">{suggestedAction.label}</p>
+              <p className="text-muted-foreground text-xs">{suggestedAction.label}</p>
             </Button>
           </ThreadPrimitive.Suggestion>
         </motion.div>
@@ -319,87 +599,40 @@ const ThreadWelcomeSuggestions: FC<{
   );
 };
 
-const Composer: FC<{ 
-  userRole?: string; 
-  variant?: "modern" | "classic";
-  userProfile?: UserProfile | null;
-}> = ({ userRole = "student", variant = "modern", userProfile = null }) => {
-  // Customize placeholder based on profile
+const Composer: FC<{ userRole?: string; variant?: "modern" | "classic"; userProfile?: UserProfile | null }> = ({ 
+  userRole = "student", 
+  variant = "modern", 
+  userProfile = null
+}) => {
   const placeholder = userProfile 
     ? `Ask me about ${userProfile.subject}...`
     : "Send a message...";
 
-  if (variant === "classic") {
-    return (
-      <ComposerPrimitive.Root className="focus-within:border-ring/20 flex w-full flex-wrap items-end rounded-lg border bg-inherit px-2.5 shadow-sm transition-colors ease-in">
-        <ComposerPrimitive.Input
-          rows={1}
-          autoFocus
-          placeholder={placeholder}
-          className="placeholder:text-muted-foreground max-h-40 flex-grow resize-none border-none bg-transparent px-2 py-4 text-sm outline-none focus:ring-0 disabled:cursor-not-allowed"
-        />
-        <ComposerAction variant="classic" />
-      </ComposerPrimitive.Root>
-    );
-  }
-
   return (
-    <div className="bg-background relative mx-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-4 px-[var(--thread-padding-x)] pb-4 md:pb-6">
-      <ComposerPrimitive.Root className="focus-within::ring-offset-2 relative flex w-full flex-col rounded-2xl focus-within:ring-2 focus-within:ring-black dark:focus-within:ring-white">
+    <div className="bg-background relative mx-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-4 px-4 pb-4 md:pb-6">
+      <ComposerPrimitive.Root className="relative flex w-full flex-col rounded-2xl focus-within:ring-2 focus-within:ring-black dark:focus-within:ring-white border border-gray-200 shadow-sm">
         <ComposerPrimitive.Input
           placeholder={placeholder}
-          className="bg-muted border-border dark:border-muted-foreground/15 focus:outline-primary placeholder:text-muted-foreground max-h-[calc(50dvh)] min-h-16 w-full resize-none rounded-t-2xl border-x border-t px-4 pt-2 pb-3 text-base outline-none"
+          className="bg-white placeholder:text-muted-foreground max-h-[calc(50dvh)] min-h-16 w-full resize-none rounded-t-2xl border-x border-t px-4 pt-2 pb-3 text-base outline-none"
           rows={1}
           autoFocus
           aria-label="Message input"
         />
-        <ComposerAction variant="modern" />
+        <ComposerAction variant={variant} />
       </ComposerPrimitive.Root>
     </div>
   );
 };
 
 const ComposerAction: FC<{ variant?: "modern" | "classic" }> = ({ variant = "modern" }) => {
-  if (variant === "classic") {
-    return (
-      <>
-        <ThreadPrimitive.If running={false}>
-          <ComposerPrimitive.Send asChild>
-            <TooltipIconButton
-              tooltip="Send"
-              variant="default"
-              className="my-2.5 size-8 p-2 transition-opacity ease-in"
-            >
-              <SendHorizontalIcon />
-            </TooltipIconButton>
-          </ComposerPrimitive.Send>
-        </ThreadPrimitive.If>
-        <ThreadPrimitive.If running>
-          <ComposerPrimitive.Cancel asChild>
-            <TooltipIconButton
-              tooltip="Cancel"
-              variant="default"
-              className="my-2.5 size-8 p-2 transition-opacity ease-in"
-            >
-              <CircleStopIcon />
-            </TooltipIconButton>
-          </ComposerPrimitive.Cancel>
-        </ThreadPrimitive.If>
-      </>
-    );
-  }
-
   return (
-    <div className="bg-muted border-border dark:border-muted-foreground/15 relative flex items-center justify-between rounded-b-2xl border-x border-b p-2">
+    <div className="bg-gray-50 relative flex items-center justify-between rounded-b-2xl border-x border-b p-3">
       <TooltipIconButton
         tooltip="Attach file"
         variant="ghost"
-        className="hover:bg-foreground/15 dark:hover:bg-background/50 scale-115 p-3.5"
-        onClick={() => {
-          console.log("Attachment clicked - not implemented");
-        }}
+        className="hover:bg-gray-200 p-2.5 rounded-lg transition-colors"
       >
-        <PlusIcon />
+        <PlusIcon className="h-4 w-4 text-gray-600" />
       </TooltipIconButton>
 
       <ThreadPrimitive.If running={false}>
@@ -407,10 +640,10 @@ const ComposerAction: FC<{ variant?: "modern" | "classic" }> = ({ variant = "mod
           <Button
             type="submit"
             variant="default"
-            className="dark:border-muted-foreground/90 border-muted-foreground/60 hover:bg-primary/75 size-8 rounded-full border"
+            className="bg-blue-600 hover:bg-blue-700 text-white size-9 rounded-full transition-colors shadow-sm"
             aria-label="Send message"
           >
-            <ArrowUpIcon className="size-5" />
+            <ArrowUpIcon className="size-4" />
           </Button>
         </ComposerPrimitive.Send>
       </ThreadPrimitive.If>
@@ -420,10 +653,10 @@ const ComposerAction: FC<{ variant?: "modern" | "classic" }> = ({ variant = "mod
           <Button
             type="button"
             variant="default"
-            className="dark:border-muted-foreground/90 border-muted-foreground/60 hover:bg-primary/75 size-8 rounded-full border"
+            className="bg-red-600 hover:bg-red-700 text-white size-9 rounded-full transition-colors shadow-sm"
             aria-label="Stop generating"
           >
-            <Square className="size-3.5 fill-white dark:size-4 dark:fill-black" />
+            <Square className="size-3.5 fill-white" />
           </Button>
         </ComposerPrimitive.Cancel>
       </ThreadPrimitive.If>
@@ -434,36 +667,31 @@ const ComposerAction: FC<{ variant?: "modern" | "classic" }> = ({ variant = "mod
 const MessageError: FC = () => {
   return (
     <MessagePrimitive.Error>
-      <ErrorPrimitive.Root className="border-destructive bg-destructive/10 dark:bg-destructive/5 text-destructive mt-2 rounded-md border p-3 text-sm dark:text-red-200">
+      <ErrorPrimitive.Root className="border-destructive bg-destructive/10 text-destructive mt-2 rounded-md border p-3 text-sm">
         <ErrorPrimitive.Message className="line-clamp-2" />
       </ErrorPrimitive.Root>
     </MessagePrimitive.Error>
   );
 };
 
-const AssistantMessage: FC<{ variant?: "modern" | "classic"; userProfile?: UserProfile | null }> = ({ 
+const AssistantMessage: FC<{ variant?: "modern" | "classic"; userProfile?: UserProfile | null; onSpeak?: (content: string) => void; isTextToSpeechEnabled?: boolean }> = ({ 
   variant = "modern", 
-  userProfile = null 
+  userProfile = null,
+  onSpeak,
+  isTextToSpeechEnabled = false
 }) => {
-  if (variant === "classic") {
-    return (
-      <MessagePrimitive.Root className="grid grid-cols-[auto_auto_1fr] grid-rows-[auto_1fr] relative w-full max-w-[var(--thread-max-width)] py-4">
-        <div className="text-foreground max-w-[calc(var(--thread-max-width)*0.8)] break-words leading-7 col-span-2 col-start-2 row-start-1 my-1.5">
-          <MessagePrimitive.Content components={{ Text: MarkdownText }} />
-          <MessageError />
-        </div>
+  const [messageContent, setMessageContent] = useState("");
 
-        <AssistantActionBar variant="classic" />
-
-        <BranchPicker className="col-start-2 row-start-2 -ml-2 mr-2" />
-      </MessagePrimitive.Root>
-    );
-  }
+  const handleSpeak = () => {
+    if (onSpeak && messageContent) {
+      onSpeak(messageContent);
+    }
+  };
 
   return (
     <MessagePrimitive.Root asChild>
       <motion.div
-        className="relative mx-auto grid w-full max-w-[var(--thread-max-width)] grid-cols-[auto_auto_1fr] grid-rows-[auto_1fr] px-[var(--thread-padding-x)] py-4"
+        className="relative mx-auto grid w-full max-w-[var(--thread-max-width)] grid-cols-[auto_auto_1fr] grid-rows-[auto_1fr] px-4 py-4"
         initial={{ y: 5, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         data-role="assistant"
@@ -475,14 +703,23 @@ const AssistantMessage: FC<{ variant?: "modern" | "classic"; userProfile?: UserP
         <div className="text-foreground col-span-2 col-start-2 row-start-1 ml-4 leading-7 break-words">
           <MessagePrimitive.Content
             components={{
-              Text: MarkdownText,
+              Text: (props: any) => {
+                useEffect(() => {
+                  setMessageContent(props.text || "");
+                }, [props.text]);
+                return <MarkdownText {...props} />;
+              },
               tools: { Fallback: ToolFallback },
             }}
           />
           <MessageError />
         </div>
 
-        <AssistantActionBar variant="modern" />
+        <AssistantActionBar 
+          variant={variant} 
+          onSpeak={handleSpeak}
+          isTextToSpeechEnabled={isTextToSpeechEnabled}
+        />
 
         <BranchPicker className="col-start-2 row-start-2 -ml-2 mr-2" />
       </motion.div>
@@ -490,66 +727,70 @@ const AssistantMessage: FC<{ variant?: "modern" | "classic"; userProfile?: UserP
   );
 };
 
-const AssistantActionBar: FC<{ variant?: "modern" | "classic" }> = ({ variant = "modern" }) => {
-  const className = variant === "modern"
-    ? "text-muted-foreground data-floating:bg-background col-start-3 row-start-2 mt-3 ml-3 flex gap-1 data-floating:absolute data-floating:mt-2 data-floating:rounded-md data-floating:border data-floating:p-1 data-floating:shadow-sm"
-    : "text-muted-foreground flex gap-1 col-start-3 row-start-2 -ml-1 data-[floating]:bg-background data-[floating]:absolute data-[floating]:rounded-md data-[floating]:border data-[floating]:p-1 data-[floating]:shadow-sm";
-
+const AssistantActionBar: FC<{ variant?: "modern" | "classic"; onSpeak?: () => void; isTextToSpeechEnabled?: boolean }> = ({ 
+  variant = "modern",
+  onSpeak,
+  isTextToSpeechEnabled = false
+}) => {
   return (
     <ActionBarPrimitive.Root
       hideWhenRunning
       autohide="not-last"
       autohideFloat="single-branch"
-      className={className}
+      className="text-muted-foreground col-start-3 row-start-2 mt-3 ml-3 flex gap-1"
     >
+      {isTextToSpeechEnabled && (
+        <TooltipIconButton tooltip="Read aloud" onClick={onSpeak}>
+          <Volume2 className="h-4 w-4" />
+        </TooltipIconButton>
+      )}
       <ActionBarPrimitive.Copy asChild>
         <TooltipIconButton tooltip="Copy">
-          <MessagePrimitive.If copied>
-            <CheckIcon />
-          </MessagePrimitive.If>
-          <MessagePrimitive.If copied={false}>
-            <CopyIcon />
-          </MessagePrimitive.If>
+          <MessagePrimitive.If copied><CheckIcon /></MessagePrimitive.If>
+          <MessagePrimitive.If copied={false}><CopyIcon /></MessagePrimitive.If>
         </TooltipIconButton>
       </ActionBarPrimitive.Copy>
       <ActionBarPrimitive.Reload asChild>
-        <TooltipIconButton tooltip="Refresh">
-          <RefreshCwIcon />
-        </TooltipIconButton>
+        <TooltipIconButton tooltip="Refresh"><RefreshCwIcon /></TooltipIconButton>
       </ActionBarPrimitive.Reload>
     </ActionBarPrimitive.Root>
   );
 };
 
-const UserMessage: FC<{ variant?: "modern" | "classic" }> = ({ variant = "modern" }) => {
-  if (variant === "classic") {
-    return (
-      <MessagePrimitive.Root className="grid auto-rows-auto grid-cols-[minmax(72px,1fr)_auto] gap-y-2 [&:where(>*)]:col-start-2 w-full max-w-[var(--thread-max-width)] py-4">
-        <UserActionBar variant="classic" />
+const UserMessage: FC<{ variant?: "modern" | "classic"; onSpeakText?: (text: string) => void; isTextToSpeechEnabled?: boolean }> = ({ 
+  variant = "modern", 
+  onSpeakText,
+  isTextToSpeechEnabled = false
+}) => {
+  const [messageContent, setMessageContent] = useState("");
 
-        <div className="bg-muted text-foreground max-w-[calc(var(--thread-max-width)*0.8)] break-words rounded-3xl px-5 py-2.5 col-start-2 row-start-2">
-          <MessagePrimitive.Content />
-        </div>
-
-        <BranchPicker className="col-span-full col-start-1 row-start-3 -mr-1 justify-end" />
-      </MessagePrimitive.Root>
-    );
-  }
+  const handleSpeak = () => {
+    if (onSpeakText && messageContent) {
+      onSpeakText(messageContent);
+    }
+  };
 
   return (
     <MessagePrimitive.Root asChild>
       <motion.div
-        className="mx-auto grid w-full max-w-[var(--thread-max-width)] auto-rows-auto grid-cols-[minmax(72px,1fr)_auto] gap-y-1 px-[var(--thread-padding-x)] py-4 [&:where(>*)]:col-start-2"
+        className="mx-auto grid w-full max-w-[var(--thread-max-width)] auto-rows-auto grid-cols-[minmax(72px,1fr)_auto] gap-y-1 px-4 py-4 [&:where(>*)]:col-start-2"
         initial={{ y: 5, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         data-role="user"
       >
-        <UserActionBar variant="modern" />
-
+        <UserActionBar variant={variant} />
         <div className="bg-muted text-foreground max-w-[calc(var(--thread-max-width)*0.8)] break-words rounded-3xl px-5 py-2.5 col-start-2 row-start-2">
-          <MessagePrimitive.Content />
+          <MessagePrimitive.Content 
+            components={{
+              Text: (props: any) => {
+                useEffect(() => {
+                  setMessageContent(props.text || "");
+                }, [props.text]);
+                return <span>{props.text}</span>;
+              }
+            }}
+          />
         </div>
-
         <BranchPicker className="col-span-full col-start-1 row-start-3 -mr-1 justify-end" />
       </motion.div>
     </MessagePrimitive.Root>
@@ -557,121 +798,43 @@ const UserMessage: FC<{ variant?: "modern" | "classic" }> = ({ variant = "modern
 };
 
 const UserActionBar: FC<{ variant?: "modern" | "classic" }> = ({ variant = "modern" }) => {
-  const className = variant === "modern"
-    ? "col-start-1 mt-2.5 mr-3 flex flex-col items-end"
-    : "flex flex-col items-end col-start-1 row-start-2 mr-3 mt-2.5";
-
   return (
-    <ActionBarPrimitive.Root
-      hideWhenRunning
-      autohide="not-last"
-      className={className}
-    >
+    <ActionBarPrimitive.Root hideWhenRunning autohide="not-last" className="col-start-1 mt-2.5 mr-3 flex flex-col items-end">
       <ActionBarPrimitive.Edit asChild>
-        <TooltipIconButton tooltip="Edit">
-          <PencilIcon />
-        </TooltipIconButton>
+        <TooltipIconButton tooltip="Edit"><PencilIcon /></TooltipIconButton>
       </ActionBarPrimitive.Edit>
     </ActionBarPrimitive.Root>
   );
 };
 
 const EditComposer: FC<{ variant?: "modern" | "classic" }> = ({ variant = "modern" }) => {
-  if (variant === "classic") {
-    return (
-      <ComposerPrimitive.Root className="bg-muted my-4 flex w-full max-w-[var(--thread-max-width)] flex-col gap-2 rounded-xl">
-        <ComposerPrimitive.Input className="text-foreground flex h-8 w-full resize-none bg-transparent p-4 pb-0 outline-none" />
-
-        <div className="mx-3 mb-3 flex items-center justify-center gap-2 self-end">
-          <ComposerPrimitive.Cancel asChild>
-            <Button variant="ghost">Cancel</Button>
-          </ComposerPrimitive.Cancel>
-          <ComposerPrimitive.Send asChild>
-            <Button>Send</Button>
-          </ComposerPrimitive.Send>
-        </div>
-      </ComposerPrimitive.Root>
-    );
-  }
-
   return (
-    <div className="mx-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-4 px-[var(--thread-padding-x)]">
+    <div className="mx-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-4 px-4">
       <ComposerPrimitive.Root className="bg-muted ml-auto flex w-full max-w-7/8 flex-col rounded-xl">
-        <ComposerPrimitive.Input
-          className="text-foreground flex min-h-[60px] w-full resize-none bg-transparent p-4 outline-none"
-          autoFocus
-        />
-
+        <ComposerPrimitive.Input className="text-foreground flex min-h-[60px] w-full resize-none bg-transparent p-4 outline-none" autoFocus />
         <div className="mx-3 mb-3 flex items-center justify-center gap-2 self-end">
-          <ComposerPrimitive.Cancel asChild>
-            <Button variant="ghost">Cancel</Button>
-          </ComposerPrimitive.Cancel>
-          <ComposerPrimitive.Send asChild>
-            <Button>Send</Button>
-          </ComposerPrimitive.Send>
+          <ComposerPrimitive.Cancel asChild><Button variant="ghost">Cancel</Button></ComposerPrimitive.Cancel>
+          <ComposerPrimitive.Send asChild><Button>Send</Button></ComposerPrimitive.Send>
         </div>
       </ComposerPrimitive.Root>
     </div>
   );
 };
 
-const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({
-  className,
-  ...rest
-}) => {
+const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({ className, ...rest }) => {
   return (
-    <BranchPickerPrimitive.Root
-      hideWhenSingleBranch
-      className={cn(
-        "text-muted-foreground inline-flex items-center text-xs",
-        className,
-      )}
-      {...rest}
-    >
-      <BranchPickerPrimitive.Previous asChild>
-        <TooltipIconButton tooltip="Previous">
-          <ChevronLeftIcon />
-        </TooltipIconButton>
-      </BranchPickerPrimitive.Previous>
-      <span className="font-medium">
-        <BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
-      </span>
-      <BranchPickerPrimitive.Next asChild>
-        <TooltipIconButton tooltip="Next">
-          <ChevronRightIcon />
-        </TooltipIconButton>
-      </BranchPickerPrimitive.Next>
+    <BranchPickerPrimitive.Root hideWhenSingleBranch className={cn("text-muted-foreground inline-flex items-center text-xs", className)} {...rest}>
+      <BranchPickerPrimitive.Previous asChild><TooltipIconButton tooltip="Previous"><ChevronLeftIcon /></TooltipIconButton></BranchPickerPrimitive.Previous>
+      <span className="font-medium"><BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count /></span>
+      <BranchPickerPrimitive.Next asChild><TooltipIconButton tooltip="Next"><ChevronRightIcon /></TooltipIconButton></BranchPickerPrimitive.Next>
     </BranchPickerPrimitive.Root>
   );
 };
 
 const StarIcon = ({ size = 14 }: { size?: number }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 16 16"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M8 0L9.79611 6.20389L16 8L9.79611 9.79611L8 16L6.20389 9.79611L0 8L6.20389 6.20389L8 0Z"
-      fill="currentColor"
-    />
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M8 0L9.79611 6.20389L16 8L9.79611 9.79611L8 16L6.20389 9.79611L0 8L6.20389 6.20389L8 0Z" fill="currentColor" />
   </svg>
 );
-
-const CircleStopIcon = () => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 16 16"
-      fill="currentColor"
-      width="16"
-      height="16"
-    >
-      <rect width="10" height="10" x="3" y="3" rx="2" />
-    </svg>
-  );
-};
 
 export default Thread;
