@@ -1,17 +1,47 @@
 "use client";
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Brain, Palette, GraduationCap, Sparkles, 
-  ArrowRight, Users, BookOpen, Zap, Shield,
-  Rocket, Star, LogIn, UserPlus, Calculator,
-  FileText, Calendar, Clock, BarChart3,
-  Heart, QrCode, Hash, Ruler, CheckSquare, 
-  BookOpenText, Home, X, Play, Sigma
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Brain,
+  Palette,
+  GraduationCap,
+  Sparkles,
+  ArrowRight,
+  Users,
+  BookOpen,
+  Zap,
+  Shield,
+  Rocket,
+  Star,
+  LogIn,
+  UserPlus,
+  Calculator,
+  FileText,
+  Calendar,
+  Clock,
+  BarChart3,
+  Heart,
+  QrCode,
+  Hash,
+  Ruler,
+  CheckSquare,
+  BookOpenText,
+  Home,
+  X,
+  Play,
+  Sigma,
+  Download,
+  Smartphone,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 // Type definitions
 interface Tool {
@@ -42,7 +72,10 @@ export default function Dashboard() {
   const router = useRouter();
   const [currentFeature, setCurrentFeature] = useState(0);
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
-  const [activeTab, setActiveTab] = useState<'students' | 'teachers'>('students');
+  const [activeTab, setActiveTab] = useState<"students" | "teachers">(
+    "students"
+  );
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
 
   // Auto-rotate features
   useEffect(() => {
@@ -52,22 +85,47 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  // PWA Install Prompt
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Listen for beforeinstallprompt event
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.deferredPrompt = e;
+      });
+    }
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (window.deferredPrompt) {
+      window.deferredPrompt.prompt();
+      const { outcome } = await window.deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        window.deferredPrompt = null;
+      }
+    } else {
+      setShowInstallGuide(true);
+    }
+  };
+
   const features: Feature[] = [
     {
       icon: Brain,
       title: "AI Learning Assistant",
-      description: "24/7 personalized tutoring and homework help with text-based AI",
+      description:
+        "24/7 personalized tutoring and homework help with text-based AI",
       gradient: "from-violet-500 via-purple-500 to-fuchsia-500",
       color: "violet",
-      action: "Start Chatting"
+      action: "Start Chatting",
     },
     {
       icon: Palette,
       title: "Student Dashboard",
-      description: "10+ essential apps that work completely offline for uninterrupted learning",
+      description:
+        "10+ essential apps that work completely offline for uninterrupted learning",
       gradient: "from-cyan-500 via-blue-500 to-indigo-500",
       color: "blue",
-      action: "Student Tools"
+      action: "Student Tools",
     },
     {
       icon: GraduationCap,
@@ -75,19 +133,18 @@ export default function Dashboard() {
       description: "Complete classroom management suite for educators",
       gradient: "from-emerald-500 via-green-500 to-teal-500",
       color: "emerald",
-      action: "Teacher Tools"
-    }
+      action: "Teacher Tools",
+    },
   ];
 
   const studentTools: Tool[] = [
-  
     {
       icon: Clock,
       name: "Timer",
       description: "Focus timer with Pomodoro technique",
       category: "Productivity",
       color: "text-orange-400",
-      bgColor: "bg-orange-500/10"
+      bgColor: "bg-orange-500/10",
     },
     {
       icon: FileText,
@@ -95,7 +152,7 @@ export default function Dashboard() {
       description: "Rich text editor for organized note-taking",
       category: "Productivity",
       color: "text-yellow-400",
-      bgColor: "bg-yellow-500/10"
+      bgColor: "bg-yellow-500/10",
     },
     {
       icon: CheckSquare,
@@ -103,7 +160,7 @@ export default function Dashboard() {
       description: "Task management and productivity tracker",
       category: "Productivity",
       color: "text-green-400",
-      bgColor: "bg-green-500/10"
+      bgColor: "bg-green-500/10",
     },
     {
       icon: Sigma,
@@ -111,7 +168,7 @@ export default function Dashboard() {
       description: "Comprehensive math formula reference guide",
       category: "Reference",
       color: "text-purple-400",
-      bgColor: "bg-purple-500/10"
+      bgColor: "bg-purple-500/10",
     },
     {
       icon: BookOpenText,
@@ -119,7 +176,7 @@ export default function Dashboard() {
       description: "Visual study planner and exam schedule organizer",
       category: "Planning",
       color: "text-red-400",
-      bgColor: "bg-red-500/10"
+      bgColor: "bg-red-500/10",
     },
     {
       icon: QrCode,
@@ -127,7 +184,7 @@ export default function Dashboard() {
       description: "Create custom QR codes for various purposes",
       category: "Tools",
       color: "text-indigo-400",
-      bgColor: "bg-indigo-500/10"
+      bgColor: "bg-indigo-500/10",
     },
     {
       icon: Ruler,
@@ -135,7 +192,7 @@ export default function Dashboard() {
       description: "Convert between different measurement units",
       category: "Tools",
       color: "text-teal-400",
-      bgColor: "bg-teal-500/10"
+      bgColor: "bg-teal-500/10",
     },
     {
       icon: Hash,
@@ -143,15 +200,15 @@ export default function Dashboard() {
       description: "Secure password generator for account safety",
       category: "Security",
       color: "text-pink-400",
-      bgColor: "bg-pink-500/10"
+      bgColor: "bg-pink-500/10",
     },
-      {
+    {
       icon: Calculator,
       name: "Calculator",
       description: "Basic calculator for simple math problems",
       category: "Math",
       color: "text-blue-400",
-      bgColor: "bg-blue-500/10"
+      bgColor: "bg-blue-500/10",
     },
     {
       icon: Heart,
@@ -159,8 +216,8 @@ export default function Dashboard() {
       description: "Health and wellness tracking for students",
       category: "Health",
       color: "text-cyan-400",
-      bgColor: "bg-cyan-500/10"
-    }
+      bgColor: "bg-cyan-500/10",
+    },
   ];
 
   const teacherTools: Tool[] = [
@@ -170,7 +227,7 @@ export default function Dashboard() {
       description: "Complete classroom and student management",
       category: "Management",
       color: "text-blue-400",
-      bgColor: "bg-blue-500/10"
+      bgColor: "bg-blue-500/10",
     },
     {
       icon: Calendar,
@@ -178,7 +235,7 @@ export default function Dashboard() {
       description: "Schedule and manage class timetables",
       category: "Planning",
       color: "text-teal-400",
-      bgColor: "bg-teal-500/10"
+      bgColor: "bg-teal-500/10",
     },
     {
       icon: BookOpen,
@@ -186,7 +243,7 @@ export default function Dashboard() {
       description: "Create and organize lesson plans efficiently",
       category: "Planning",
       color: "text-green-400",
-      bgColor: "bg-green-500/10"
+      bgColor: "bg-green-500/10",
     },
     {
       icon: FileText,
@@ -194,7 +251,7 @@ export default function Dashboard() {
       description: "Teaching notes and material organization",
       category: "Productivity",
       color: "text-yellow-400",
-      bgColor: "bg-yellow-500/10"
+      bgColor: "bg-yellow-500/10",
     },
     {
       icon: CheckSquare,
@@ -202,7 +259,7 @@ export default function Dashboard() {
       description: "Track and manage student attendance records",
       category: "Management",
       color: "text-red-400",
-      bgColor: "bg-red-500/10"
+      bgColor: "bg-red-500/10",
     },
     {
       icon: BarChart3,
@@ -210,7 +267,7 @@ export default function Dashboard() {
       description: "Monitor and analyze student progress",
       category: "Analytics",
       color: "text-indigo-400",
-      bgColor: "bg-indigo-500/10"
+      bgColor: "bg-indigo-500/10",
     },
     {
       icon: Heart,
@@ -218,15 +275,15 @@ export default function Dashboard() {
       description: "Teacher wellness and stress management",
       category: "Health",
       color: "text-cyan-400",
-      bgColor: "bg-cyan-500/10"
-    }
+      bgColor: "bg-cyan-500/10",
+    },
   ];
 
   const stats: Stat[] = [
     { icon: Users, value: "10", label: "Student Tools" },
     { icon: GraduationCap, value: "7", label: "Teacher Tools" },
     { icon: Zap, value: "100%", label: "Offline Access" },
-    { icon: Shield, value: "AI", label: "Assistant" }
+    { icon: Shield, value: "AI", label: "Assistant" },
   ];
 
   const containerVariants = {
@@ -235,9 +292,9 @@ export default function Dashboard() {
       opacity: 1,
       transition: {
         staggerChildren: 0.15,
-        delayChildren: 0.2
-      }
-    }
+        delayChildren: 0.2,
+      },
+    },
   };
 
   const itemVariants = {
@@ -248,9 +305,9 @@ export default function Dashboard() {
       transition: {
         type: "spring",
         stiffness: 100,
-        damping: 12
-      } as const
-    }
+        damping: 12,
+      } as const,
+    },
   };
 
   const floatingAnimation = {
@@ -258,20 +315,20 @@ export default function Dashboard() {
     transition: {
       duration: 6,
       repeat: Infinity,
-      ease: "easeInOut" as const
-    }
+      ease: "easeInOut" as const,
+    },
   };
 
   const handleGetStarted = () => {
-    router.push('/signup');
+    router.push("/signup");
   };
 
   const handleSignUp = () => {
-    router.push('/signup');
+    router.push("/signup");
   };
 
   const handleLogin = () => {
-    router.push('/login');
+    router.push("/login");
   };
 
   const handleToolClick = (tool: Tool) => {
@@ -283,38 +340,42 @@ export default function Dashboard() {
   };
 
   const handleGoHome = () => {
-    router.push('/');
+    router.push("/");
   };
 
   const handleFeatureClick = (action: string) => {
     if (action === "Start Chatting") {
-      router.push('/signup');
+      router.push("/signup");
     } else if (action === "Student Tools") {
-      setActiveTab('students');
-      // Scroll to tools section with better timing
+      setActiveTab("students");
       setTimeout(() => {
-        const toolsSection = document.getElementById('tools-section');
+        const toolsSection = document.getElementById("tools-section");
         if (toolsSection) {
-          const yOffset = -80; // Offset for fixed header
-          const y = toolsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-          window.scrollTo({ top: y, behavior: 'smooth' });
+          const yOffset = -80;
+          const y =
+            toolsSection.getBoundingClientRect().top +
+            window.pageYOffset +
+            yOffset;
+          window.scrollTo({ top: y, behavior: "smooth" });
         }
       }, 50);
     } else if (action === "Teacher Tools") {
-      setActiveTab('teachers');
-      // Scroll to tools section with better timing
+      setActiveTab("teachers");
       setTimeout(() => {
-        const toolsSection = document.getElementById('tools-section');
+        const toolsSection = document.getElementById("tools-section");
         if (toolsSection) {
-          const yOffset = -80; // Offset for fixed header
-          const y = toolsSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-          window.scrollTo({ top: y, behavior: 'smooth' });
+          const yOffset = -80;
+          const y =
+            toolsSection.getBoundingClientRect().top +
+            window.pageYOffset +
+            yOffset;
+          window.scrollTo({ top: y, behavior: "smooth" });
         }
       }, 50);
     }
   };
 
-  const currentTools = activeTab === 'students' ? studentTools : teacherTools;
+  const currentTools = activeTab === "students" ? studentTools : teacherTools;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-indigo-950 flex flex-col items-center p-4 relative overflow-hidden">
@@ -329,11 +390,15 @@ export default function Dashboard() {
               className="flex items-center space-x-3 cursor-pointer group"
               onClick={handleGoHome}
             >
-              <motion.div 
-                className="w-10 h-10 bg-gradient-to-r from-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/25"
+              <motion.div
+                className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-violet-500/25 bg-gradient-to-r from-violet-500 to-purple-600"
                 whileHover={{ scale: 1.05, rotate: 5 }}
               >
-                <Sparkles className="w-6 h-6 text-white" />
+                <img
+                  src="/icon-512x512.png"
+                  alt="Edu V AI Logo"
+                  className="w-full h-full object-cover"
+                />
               </motion.div>
               <span className="text-xl font-bold bg-gradient-to-r from-violet-200 to-purple-200 bg-clip-text text-transparent group-hover:from-violet-100 group-hover:to-purple-100 transition-all">
                 EduVerse
@@ -346,15 +411,15 @@ export default function Dashboard() {
               animate={{ opacity: 1, x: 0 }}
               className="flex gap-3"
             >
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={handleLogin}
                 className="text-slate-300 hover:text-white hover:bg-white/5 transition-all duration-300 font-medium rounded-xl"
               >
                 <LogIn className="w-4 h-4 mr-2" />
                 Sign In
               </Button>
-              <Button 
+              <Button
                 onClick={handleSignUp}
                 className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white shadow-lg hover:shadow-violet-500/25 transition-all duration-300 font-medium rounded-xl"
               >
@@ -369,25 +434,25 @@ export default function Dashboard() {
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Gradient Orbs */}
-        <motion.div 
+        <motion.div
           className="absolute top-1/4 -left-32 w-96 h-96 bg-violet-500/20 rounded-full blur-3xl"
-          animate={{ 
+          animate={{
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
           }}
           transition={{ duration: 8, repeat: Infinity }}
         />
-        <motion.div 
+        <motion.div
           className="absolute bottom-1/3 -right-32 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl"
-          animate={{ 
+          animate={{
             scale: [1.2, 1, 1.2],
             opacity: [0.4, 0.2, 0.4],
           }}
           transition={{ duration: 10, repeat: Infinity }}
         />
-        <motion.div 
+        <motion.div
           className="absolute top-1/2 left-1/2 w-64 h-64 bg-purple-500/15 rounded-full blur-3xl"
-          animate={{ 
+          animate={{
             scale: [1, 1.1, 1],
             rotate: [0, 180, 360],
           }}
@@ -409,12 +474,16 @@ export default function Dashboard() {
           <motion.div variants={itemVariants} className="mb-12">
             <motion.div
               animate={floatingAnimation}
-              className="w-28 h-28 bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-violet-500/25"
+              className="w-32 h-32 rounded-3xl mx-auto mb-8 shadow-2xl shadow-violet-500/25 overflow-hidden bg-gradient-to-r from-violet-500 to-purple-600"
             >
-              <Sparkles className="w-12 h-12 text-white" />
+              <img
+                src="/icon-512x512.png"
+                alt="Edu V AI Logo"
+                className="w-full h-full object-cover"
+              />
             </motion.div>
-            
-            <motion.h1 
+
+            <motion.h1
               className="text-6xl md:text-7xl lg:text-8xl font-black text-white mb-8 tracking-tight"
               variants={itemVariants}
             >
@@ -423,17 +492,18 @@ export default function Dashboard() {
                 With EduVerse
               </span>
             </motion.h1>
-            
-            <motion.p 
+
+            <motion.p
               className="text-2xl md:text-3xl text-slate-300 mb-12 max-w-4xl mx-auto leading-relaxed font-light"
               variants={itemVariants}
             >
-              Your all-in-one educational platform with AI-powered learning and essential productivity tools
+              Your all-in-one educational platform with AI-powered learning and
+              essential productivity tools
             </motion.p>
           </motion.div>
 
           {/* Stats */}
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16 max-w-2xl mx-auto"
           >
@@ -447,22 +517,36 @@ export default function Dashboard() {
                 className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 shadow-lg hover:shadow-violet-500/10 transition-all"
               >
                 <stat.icon className="w-8 h-8 text-cyan-400 mx-auto mb-3" />
-                <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
+                <div className="text-2xl font-bold text-white mb-1">
+                  {stat.value}
+                </div>
                 <div className="text-sm text-slate-400">{stat.label}</div>
               </motion.div>
             ))}
           </motion.div>
 
           {/* Main CTA */}
-          <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button 
-              size="lg" 
+          <motion.div
+            variants={itemVariants}
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+          >
+            <Button
+              size="lg"
               onClick={handleGetStarted}
               className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white px-12 py-7 text-xl font-semibold shadow-2xl hover:shadow-violet-500/25 transition-all duration-300 group rounded-2xl"
             >
               <Rocket className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform" />
               Start Learning Free
               <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform" />
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={handleInstallApp}
+              className="border-2 border-white/50 hover:border-white/70 bg-white/5 hover:bg-white/10 text-white backdrop-blur-sm px-8 py-7 text-xl font-semibold rounded-2xl group"
+            >
+              <Download className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform" />
+              Install App
             </Button>
           </motion.div>
         </motion.div>
@@ -474,13 +558,13 @@ export default function Dashboard() {
           animate="visible"
           className="mb-24"
         >
-          <motion.h2 
+          <motion.h2
             variants={itemVariants}
             className="text-5xl font-bold text-center text-white mb-6"
           >
             Everything You Need
           </motion.h2>
-          <motion.p 
+          <motion.p
             variants={itemVariants}
             className="text-xl text-slate-400 text-center mb-16 max-w-2xl mx-auto"
           >
@@ -496,13 +580,14 @@ export default function Dashboard() {
                 className="relative group"
               >
                 <Card className="h-full bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-500 hover:shadow-2xl hover:shadow-violet-500/10 overflow-hidden rounded-3xl">
-                  {/* Animated gradient overlay */}
-                  <div className={`absolute inset-0 bg-gradient-to-r ${feature.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`} />
-                  
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-r ${feature.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}
+                  />
+
                   <CardHeader className="text-center relative z-10 p-8">
-                    <motion.div 
+                    <motion.div
                       className={`w-24 h-24 bg-gradient-to-r ${feature.gradient} rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl group-hover:shadow-3xl transition-all duration-500`}
-                      whileHover={{ 
+                      whileHover={{
                         scale: 1.1,
                         rotate: [0, -5, 5, 0],
                       }}
@@ -517,9 +602,9 @@ export default function Dashboard() {
                       {feature.description}
                     </CardDescription>
                   </CardHeader>
-                  
+
                   <CardContent className="text-center relative z-10 pb-8">
-                    <Button 
+                    <Button
                       className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white border-0 shadow-lg hover:shadow-violet-500/25 transition-all duration-300 font-semibold rounded-xl py-6"
                       onClick={() => handleFeatureClick(feature.action)}
                     >
@@ -540,13 +625,13 @@ export default function Dashboard() {
           animate="visible"
           className="mb-24"
         >
-          <motion.h2 
+          <motion.h2
             variants={itemVariants}
             className="text-5xl font-bold text-center text-white mb-6"
           >
             Essential Tools
           </motion.h2>
-          <motion.p 
+          <motion.p
             variants={itemVariants}
             className="text-xl text-slate-400 text-center mb-12 max-w-2xl mx-auto"
           >
@@ -557,21 +642,21 @@ export default function Dashboard() {
           <div className="flex justify-center mb-12">
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-1 border border-white/10">
               <button
-                onClick={() => setActiveTab('students')}
+                onClick={() => setActiveTab("students")}
                 className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                  activeTab === 'students'
-                    ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg'
-                    : 'text-slate-300 hover:text-white'
+                  activeTab === "students"
+                    ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg"
+                    : "text-slate-300 hover:text-white"
                 }`}
               >
                 Student Tools
               </button>
               <button
-                onClick={() => setActiveTab('teachers')}
+                onClick={() => setActiveTab("teachers")}
                 className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                  activeTab === 'teachers'
-                    ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg'
-                    : 'text-slate-300 hover:text-white'
+                  activeTab === "teachers"
+                    ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg"
+                    : "text-slate-300 hover:text-white"
                 }`}
               >
                 Teacher Tools
@@ -588,15 +673,18 @@ export default function Dashboard() {
                 whileHover={{ y: -8, scale: 1.05 }}
                 className="relative group"
               >
-                <Card 
+                <Card
                   className="h-full bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 hover:shadow-2xl hover:shadow-violet-500/10 cursor-pointer rounded-2xl overflow-hidden"
                   onClick={() => handleToolClick(tool)}
                 >
                   <CardContent className="p-6 text-center relative">
-                    {/* Background glow */}
-                    <div className={`absolute inset-0 ${tool.bgColor} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-                    
-                    <div className={`w-16 h-16 ${tool.color} bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-white/10 transition-colors relative z-10 border border-white/10`}>
+                    <div
+                      className={`absolute inset-0 ${tool.bgColor} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                    />
+
+                    <div
+                      className={`w-16 h-16 ${tool.color} bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-white/10 transition-colors relative z-10 border border-white/10`}
+                    >
                       <tool.icon className="w-8 h-8" />
                     </div>
                     <h3 className="font-bold text-white text-lg mb-2 relative z-10">
@@ -615,11 +703,68 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        {/* Final CTA */}
+        {/* Download App Section */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
+          className="text-center mb-16"
+        >
+          <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-3xl p-16 border border-white/10 backdrop-blur-sm relative overflow-hidden">
+            <motion.div
+              animate={floatingAnimation}
+              className="w-24 h-24 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-cyan-500/25 relative z-10"
+            >
+              <Smartphone className="w-10 h-10 text-white" />
+            </motion.div>
+            <h2 className="text-4xl font-bold text-white mb-6 relative z-10">
+              Get The App Experience
+            </h2>
+            <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto relative z-10">
+              Install EduVerse on your device for faster access, offline functionality, and app-like experience
+            </p>
+            
+            <div className="flex items-center justify-center mb-8 relative z-10">
+              <div className="bg-white/10 rounded-2xl p-4 border border-white/20 backdrop-blur-sm">
+                <img
+                  src="/icon-512x512.png"
+                  alt="EduVerse App Icon"
+                  className="w-20 h-20 rounded-2xl mx-auto mb-4 shadow-lg"
+                />
+                <div className="text-center">
+                  <h3 className="text-white font-bold text-lg">EduVerse</h3>
+                  <p className="text-slate-300 text-sm">Educational AI Platform</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
+              <Button
+                size="lg"
+                onClick={handleInstallApp}
+                className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-12 py-6 text-lg font-semibold shadow-2xl hover:shadow-cyan-500/25 rounded-2xl"
+              >
+                <Download className="w-5 h-5 mr-2" />
+                Install App Now
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setShowInstallGuide(true)}
+                className="border-2 border-white/50 hover:border-white/70 bg-white/5 hover:bg-white/10 text-white backdrop-blur-sm"
+              >
+                <Smartphone className="w-5 h-5 mr-2" />
+                Installation Guide
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Final CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9 }}
           className="text-center mb-16"
         >
           <div className="bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-3xl p-16 border border-white/10 backdrop-blur-sm relative overflow-hidden">
@@ -636,7 +781,7 @@ export default function Dashboard() {
               Join our platform and experience the future of education today
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
-              <Button 
+              <Button
                 size="lg"
                 onClick={handleSignUp}
                 className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white px-12 py-6 text-lg font-semibold shadow-2xl hover:shadow-violet-500/25 rounded-2xl"
@@ -644,7 +789,7 @@ export default function Dashboard() {
                 <UserPlus className="w-5 h-5 mr-2" />
                 Create Free Account
               </Button>
-              <Button 
+              <Button
                 variant="outline"
                 size="lg"
                 onClick={handleLogin}
@@ -676,14 +821,17 @@ export default function Dashboard() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="relative">
-                {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-white/10">
                   <div className="flex items-center space-x-4">
-                    <div className={`w-12 h-12 ${selectedTool.color} ${selectedTool.bgColor} rounded-xl flex items-center justify-center`}>
+                    <div
+                      className={`w-12 h-12 ${selectedTool.color} ${selectedTool.bgColor} rounded-xl flex items-center justify-center`}
+                    >
                       <selectedTool.icon className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold text-white">{selectedTool.name}</h3>
+                      <h3 className="text-2xl font-bold text-white">
+                        {selectedTool.name}
+                      </h3>
                       <p className="text-slate-400">{selectedTool.category}</p>
                     </div>
                   </div>
@@ -697,14 +845,13 @@ export default function Dashboard() {
                   </Button>
                 </div>
 
-                {/* Content */}
                 <div className="p-6">
                   <p className="text-slate-300 text-lg leading-relaxed mb-6">
                     {selectedTool.description}
                   </p>
 
                   <div className="flex justify-center">
-                    <Button 
+                    <Button
                       onClick={handleSignUp}
                       className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-xl py-3 px-8"
                     >
@@ -718,6 +865,107 @@ export default function Dashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Install Guide Modal */}
+      <AnimatePresence>
+        {showInstallGuide && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowInstallGuide(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-slate-900 rounded-3xl border border-white/10 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative">
+                <div className="flex items-center justify-between p-6 border-b border-white/10">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
+                      <Smartphone className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-white">
+                        Install EduVerse App
+                      </h3>
+                      <p className="text-slate-400">Follow these steps to install</p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowInstallGuide(false)}
+                    className="text-slate-400 hover:text-white hover:bg-white/5 rounded-xl"
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+
+                <div className="p-6">
+                  <div className="space-y-6">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <span className="text-white font-bold text-sm">1</span>
+                      </div>
+                      <div>
+                        <h4 className="text-white font-semibold mb-2">On Mobile (Android)</h4>
+                        <p className="text-slate-300">
+                          Open Chrome → Menu (⋮) → "Add to Home screen" → "Add"
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-4">
+                      <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <span className="text-white font-bold text-sm">2</span>
+                      </div>
+                      <div>
+                        <h4 className="text-white font-semibold mb-2">On Mobile (iOS)</h4>
+                        <p className="text-slate-300">
+                          Open Safari → Share button (↗) → "Add to Home Screen" → "Add"
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start space-x-4">
+                      <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                        <span className="text-white font-bold text-sm">3</span>
+                      </div>
+                      <div>
+                        <h4 className="text-white font-semibold mb-2">On Desktop</h4>
+                        <p className="text-slate-300">
+                          Look for the install icon in the address bar or go to Menu → "Install EduVerse"
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-center mt-8">
+                    <Button
+                      onClick={() => setShowInstallGuide(false)}
+                      className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl py-3 px-8"
+                    >
+                      Got It!
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
+}
+
+// Add this to your global types
+declare global {
+  interface Window {
+    deferredPrompt: any;
+  }
 }
