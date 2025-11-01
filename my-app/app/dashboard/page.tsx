@@ -6,7 +6,6 @@ import {
   Brain,
   Palette,
   GraduationCap,
-  Sparkles,
   ArrowRight,
   Users,
   BookOpen,
@@ -31,8 +30,6 @@ import {
   X,
   Play,
   Sigma,
-  Download,
-  Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -75,7 +72,6 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<"students" | "teachers">(
     "students"
   );
-  const [showInstallGuide, setShowInstallGuide] = useState(false);
 
   // Auto-rotate features
   useEffect(() => {
@@ -84,29 +80,6 @@ export default function Dashboard() {
     }, 4000);
     return () => clearInterval(interval);
   }, []);
-
-  // PWA Install Prompt
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // Listen for beforeinstallprompt event
-      window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        window.deferredPrompt = e;
-      });
-    }
-  }, []);
-
-  const handleInstallApp = async () => {
-    if (window.deferredPrompt) {
-      window.deferredPrompt.prompt();
-      const { outcome } = await window.deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        window.deferredPrompt = null;
-      }
-    } else {
-      setShowInstallGuide(true);
-    }
-  };
 
   const features: Feature[] = [
     {
@@ -395,7 +368,7 @@ export default function Dashboard() {
                 whileHover={{ scale: 1.05, rotate: 5 }}
               >
                 <img
-                  src="https://raw.githubusercontent.com/Prerana-Naik/eduV-ai/main/my-app/public/icon-512x512.png"
+                  src="/icon-512x512.png"
                   alt="Edu V AI Logo"
                   className="w-full h-full object-cover"
                 />
@@ -477,7 +450,7 @@ export default function Dashboard() {
               className="w-32 h-32 rounded-3xl mx-auto mb-8 shadow-2xl shadow-violet-500/25 overflow-hidden bg-gradient-to-r from-violet-500 to-purple-600"
             >
               <img
-                src="https://raw.githubusercontent.com/Prerana-Naik/eduV-ai/main/my-app/public/icon-512x512.png"
+                src="/icon-512x512.png"
                 alt="Edu V AI Logo"
                 className="w-full h-full object-cover"
               />
@@ -538,15 +511,6 @@ export default function Dashboard() {
               <Rocket className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform" />
               Start Learning Free
               <ArrowRight className="w-6 h-6 ml-3 group-hover:translate-x-2 transition-transform" />
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={handleInstallApp}
-              className="border-2 border-white/50 hover:border-white/70 bg-white/5 hover:bg-white/10 text-white backdrop-blur-sm px-8 py-7 text-xl font-semibold rounded-2xl group"
-            >
-              <Download className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform" />
-              Install App
             </Button>
           </motion.div>
         </motion.div>
@@ -703,68 +667,11 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        {/* Download App Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="text-center mb-16"
-        >
-          <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-3xl p-16 border border-white/10 backdrop-blur-sm relative overflow-hidden">
-            <motion.div
-              animate={floatingAnimation}
-              className="w-24 h-24 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-cyan-500/25 relative z-10"
-            >
-              <Smartphone className="w-10 h-10 text-white" />
-            </motion.div>
-            <h2 className="text-4xl font-bold text-white mb-6 relative z-10">
-              Get The App Experience
-            </h2>
-            <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto relative z-10">
-              Install EduVerse on your device for faster access, offline functionality, and app-like experience
-            </p>
-            
-            <div className="flex items-center justify-center mb-8 relative z-10">
-              <div className="bg-white/10 rounded-2xl p-4 border border-white/20 backdrop-blur-sm">
-                <img
-                  src="/icon-512x512.png"
-                  alt="EduVerse App Icon"
-                  className="w-20 h-20 rounded-2xl mx-auto mb-4 shadow-lg"
-                />
-                <div className="text-center">
-                  <h3 className="text-white font-bold text-lg">EduVerse</h3>
-                  <p className="text-slate-300 text-sm">Educational AI Platform</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
-              <Button
-                size="lg"
-                onClick={handleInstallApp}
-                className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-12 py-6 text-lg font-semibold shadow-2xl hover:shadow-cyan-500/25 rounded-2xl"
-              >
-                <Download className="w-5 h-5 mr-2" />
-                Install App Now
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => setShowInstallGuide(true)}
-                className="border-2 border-white/50 hover:border-white/70 bg-white/5 hover:bg-white/10 text-white backdrop-blur-sm"
-              >
-                <Smartphone className="w-5 h-5 mr-2" />
-                Installation Guide
-              </Button>
-            </div>
-          </div>
-        </motion.div>
-
         {/* Final CTA */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9 }}
+          transition={{ delay: 0.8 }}
           className="text-center mb-16"
         >
           <div className="bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-3xl p-16 border border-white/10 backdrop-blur-sm relative overflow-hidden">
@@ -865,107 +772,6 @@ export default function Dashboard() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Install Guide Modal */}
-      <AnimatePresence>
-        {showInstallGuide && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowInstallGuide(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-slate-900 rounded-3xl border border-white/10 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="relative">
-                <div className="flex items-center justify-between p-6 border-b border-white/10">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center">
-                      <Smartphone className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-white">
-                        Install EduVerse App
-                      </h3>
-                      <p className="text-slate-400">Follow these steps to install</p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowInstallGuide(false)}
-                    className="text-slate-400 hover:text-white hover:bg-white/5 rounded-xl"
-                  >
-                    <X className="w-5 h-5" />
-                  </Button>
-                </div>
-
-                <div className="p-6">
-                  <div className="space-y-6">
-                    <div className="flex items-start space-x-4">
-                      <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                        <span className="text-white font-bold text-sm">1</span>
-                      </div>
-                      <div>
-                        <h4 className="text-white font-semibold mb-2">On Mobile (Android)</h4>
-                        <p className="text-slate-300">
-                          Open Chrome → Menu (⋮) → "Add to Home screen" → "Add"
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start space-x-4">
-                      <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                        <span className="text-white font-bold text-sm">2</span>
-                      </div>
-                      <div>
-                        <h4 className="text-white font-semibold mb-2">On Mobile (iOS)</h4>
-                        <p className="text-slate-300">
-                          Open Safari → Share button (↗) → "Add to Home Screen" → "Add"
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start space-x-4">
-                      <div className="w-8 h-8 bg-cyan-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                        <span className="text-white font-bold text-sm">3</span>
-                      </div>
-                      <div>
-                        <h4 className="text-white font-semibold mb-2">On Desktop</h4>
-                        <p className="text-slate-300">
-                          Look for the install icon in the address bar or go to Menu → "Install EduVerse"
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-center mt-8">
-                    <Button
-                      onClick={() => setShowInstallGuide(false)}
-                      className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-xl py-3 px-8"
-                    >
-                      Got It!
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
-}
-
-// Add this to your global types
-declare global {
-  interface Window {
-    deferredPrompt: any;
-  }
 }
