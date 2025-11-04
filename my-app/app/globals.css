@@ -120,3 +120,105 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Popup Styles - Hide assistant header when popup is open */
+body.popup-open [data-testid*="assistant-header"],
+body.popup-open [class*="assistant-header"],
+body.popup-open header:has(~ [class*="assistant"]),
+body.popup-open [class*="Header"],
+body.popup-open [class*="header"]:first-child,
+body.popup-open .assistant-container header,
+body.popup-open .chat-container header,
+body.popup-open main > header:first-child,
+body.popup-open [class*="chat"] header,
+body.popup-open [class*="conversation"] header,
+body.popup-open [class*="message"] header {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Prevent body scroll when popup is open */
+body.popup-open {
+  overflow: hidden !important;
+}
+
+/* Ensure popup is above everything */
+.popup-overlay {
+  z-index: 100 !important;
+}
+
+/* Animation keyframes for extra sparkle effects */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(147, 197, 253, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(129, 140, 248, 0.7);
+  }
+}
+
+@keyframes sparkle {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(180deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0) rotate(360deg);
+  }
+}
+
+/* Custom utility classes for popup animations */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 3s ease-in-out infinite;
+}
+
+.animate-sparkle {
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+/* Responsive popup adjustments */
+@media (max-width: 768px) {
+  body.popup-open .popup-container {
+    width: 95vw !important;
+    height: 90vh !important;
+    padding: 1rem !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .popup-overlay {
+    background: rgba(0, 0, 0, 0.9) !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-glow,
+  .animate-sparkle,
+  .motion-div {
+    animation: none !important;
+    transition: none !important;
+  }
+}
