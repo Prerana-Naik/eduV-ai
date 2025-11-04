@@ -114,7 +114,7 @@ export default function Dashboard() {
     {
       icon: Clock,
       name: "Timer",
-      description: "Focus timer with Pomodoro technique",
+      description: "Focus timer with Alarm",
       category: "Productivity",
       color: "text-orange-400",
       bgColor: "bg-orange-500/10",
@@ -130,7 +130,7 @@ export default function Dashboard() {
     {
       icon: CheckSquare,
       name: "Todo",
-      description: "Task management and productivity tracker",
+      description: "Task management Tracking",
       category: "Productivity",
       color: "text-green-400",
       bgColor: "bg-green-500/10",
@@ -146,7 +146,7 @@ export default function Dashboard() {
     {
       icon: BookOpenText,
       name: "Exam Map",
-      description: "Visual study planner and exam schedule organizer",
+      description: "Common Entrance Exam Syllabus and Resources links",
       category: "Planning",
       color: "text-red-400",
       bgColor: "bg-red-500/10",
@@ -154,7 +154,7 @@ export default function Dashboard() {
     {
       icon: QrCode,
       name: "QR Generator",
-      description: "Create custom QR codes for various purposes",
+      description: "Create custom QR codes for urls",
       category: "Tools",
       color: "text-indigo-400",
       bgColor: "bg-indigo-500/10",
@@ -170,7 +170,7 @@ export default function Dashboard() {
     {
       icon: Hash,
       name: "Password Generator",
-      description: "Secure password generator for account safety",
+      description: "Secure password generator for all your accounts in one place",
       category: "Security",
       color: "text-pink-400",
       bgColor: "bg-pink-500/10",
@@ -186,7 +186,7 @@ export default function Dashboard() {
     {
       icon: Heart,
       name: "Wellness",
-      description: "Health and wellness tracking for students",
+      description: "Health and wellness Guide for students",
       category: "Health",
       color: "text-cyan-400",
       bgColor: "bg-cyan-500/10",
@@ -245,7 +245,7 @@ export default function Dashboard() {
     {
       icon: Heart,
       name: "Wellness",
-      description: "Teacher wellness and stress management",
+      description: "Teacher wellness and stress management Guide",
       category: "Health",
       color: "text-cyan-400",
       bgColor: "bg-cyan-500/10",
@@ -255,7 +255,7 @@ export default function Dashboard() {
   const stats: Stat[] = [
     { icon: Users, value: "10", label: "Student Tools" },
     { icon: GraduationCap, value: "7", label: "Teacher Tools" },
-    { icon: Zap, value: "100%", label: "Offline Access" },
+    { icon: Zap, value: "100%", label: "Offline Tools Access" },
     { icon: Shield, value: "AI", label: "Assistant" },
   ];
 
@@ -364,7 +364,7 @@ export default function Dashboard() {
               onClick={handleGoHome}
             >
               <motion.div
-                className="w-10 h-10 rounded-xl overflow-hidden shadow-lg shadow-violet-500/25 bg-gradient-to-r from-violet-500 to-purple-600"
+                className="w-10 h-10 rounded-full overflow-hidden shadow-lg shadow-violet-500/25 bg-gradient-to-r from-violet-500 to-purple-600 ring-2 ring-violet-400/20"
                 whileHover={{ scale: 1.05, rotate: 5 }}
               >
                 <img
@@ -447,10 +447,10 @@ export default function Dashboard() {
           <motion.div variants={itemVariants} className="mb-12">
             <motion.div
               animate={floatingAnimation}
-              className="w-32 h-32 rounded-3xl mx-auto mb-8 shadow-2xl shadow-violet-500/25 overflow-hidden bg-gradient-to-r from-violet-500 to-purple-600"
+              className="w-32 h-32 rounded-full mx-auto mb-8 shadow-2xl shadow-violet-500/25 overflow-hidden bg-gradient-to-r from-violet-500 to-purple-600 ring-4 ring-violet-400/20"
             >
               <img
-                src="/icon-192x192.png"
+                src="/icon-512x512.png"
                 alt="Edu V AI Logo"
                 className="w-full h-full object-cover"
               />
