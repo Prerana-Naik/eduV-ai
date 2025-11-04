@@ -450,7 +450,7 @@ export default function Dashboard() {
               className="w-32 h-32 rounded-3xl mx-auto mb-8 shadow-2xl shadow-violet-500/25 overflow-hidden bg-gradient-to-r from-violet-500 to-purple-600"
             >
               <img
-                src="/icon-512x512.png"
+                src="/icon-192x192.png"
                 alt="Edu V AI Logo"
                 className="w-full h-full object-cover"
               />
