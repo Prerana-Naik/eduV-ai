@@ -1,4 +1,4 @@
-// app/api/chat/route.ts - FIXED CHAT STYLE
+// app/api/chat/route.ts - EDUVERSE AI
 import { google } from "@ai-sdk/google";
 import { streamText } from "ai";
 
@@ -15,7 +15,7 @@ interface UserProfile {
   role: "student" | "teacher";
   qualification?: string;
   subject: string;
-  chatStyle?: string; // Make sure this matches your database field
+  chatStyle?: string;
 }
 
 export async function POST(req: Request) {
@@ -26,14 +26,13 @@ export async function POST(req: Request) {
     userId?: string;
   } = await req.json();
 
-  // FIX: Ensure chatStyle has a proper default
-  const userChatStyle = userProfile?.chatStyle || "wise"; // Default to "wise" if undefined
+  const userChatStyle = userProfile?.chatStyle || "conversational";
   
-  console.log(`🚀 Divine Gurukula AI Activated`);
-  console.log(`👤 ${userProfile?.role === 'teacher' ? 'Guru' : 'Shishya'}: ${userProfile?.name || 'Guest'}`);
-  console.log(`📚 ${userProfile?.role === 'teacher' ? 'Teaching' : 'Studying'}: ${userProfile?.subject || 'General'}`);
+  console.log(`🌐 Eduverse AI Activated`);
+  console.log(`👤 ${userProfile?.role === 'teacher' ? 'Educator' : 'Learner'}: ${userProfile?.name || 'Guest'}`);
+  console.log(`📚 Focus Area: ${userProfile?.subject || 'General'}`);
   console.log(`🎨 Chat Style: ${userChatStyle}`);
-  console.log(`🪶 Thread: ${threadId || 'New Journey'}`);
+  console.log(`💬 Thread: ${threadId || 'New Conversation'}`);
 
   // --- CHAT STYLE CONFIGURATIONS ---
   const chatStyleConfig = {
@@ -53,80 +52,105 @@ export async function POST(req: Request) {
       emoji: "💬"
     },
     wise: {
-      instruction: "Use philosophical, heart-centered language. Share wisdom and life lessons. Speak with the patience of an ancient guru and warmth of a caring mentor.",
-      tone: "profound and nurturing",
-      emoji: ""
+      instruction: "Use thoughtful, reflective language. Share insights and deeper understanding. Be patient and encouraging.",
+      tone: "thoughtful and nurturing",
+      emoji: "✨"
     }
   };
 
-  // FIX: Get the actual style or default to "wise"
-  const selectedStyle = chatStyleConfig[userChatStyle as keyof typeof chatStyleConfig] || chatStyleConfig.wise;
+  const selectedStyle = chatStyleConfig[userChatStyle as keyof typeof chatStyleConfig] || chatStyleConfig.conversational;
 
-  // --- DIVINE GURUKULA SYSTEM PROMPT WITH CHAT STYLE ---
-  let systemPrompt = `You are a wise Gurukula mentor, blending ancient wisdom with modern compassion. 
-Speak with patience, kindness, and soulful encouragement.`;
+  // --- EDUVERSE SYSTEM PROMPT WITH AGE-BASED EMPATHY ---
+  let systemPrompt = `You are Eduverse, an empathetic AI learning companion. 
+Your mission is to support, encourage, and inspire learners and educators with warmth and understanding.`;
 
   if (userProfile) {
-    const qualificationText = userProfile.qualification ? `, holder of ${userProfile.qualification}` : '';
+    const qualificationText = userProfile.qualification ? `, ${userProfile.qualification}` : '';
     
-    // TEACHER-SPECIFIC STYLE ADJUSTMENTS
-    let roleSpecificStyle = "";
-    if (userProfile.role === "teacher") {
-      // FOR TEACHERS: Make wise style more collegial, academic more practical
-      if (userChatStyle === "wise") {
-        roleSpecificStyle = "Share educational wisdom and teaching insights. Speak as a fellow educator who understands classroom challenges.";
-      } else if (userChatStyle === "academic") {
-        roleSpecificStyle = "Focus on practical pedagogical strategies and evidence-based teaching methods.";
-      }
-    }
-
-    // ROLE-BASED GUIDANCE
-    let roleWisdom = "";
-    if (userProfile.role === "teacher") {
-      roleWisdom = `You are speaking to ${userProfile.name}, an experienced educator. 
-      - Speak as a COLLEGIAL MENTOR, not just an assistant
-      - Offer pedagogical insights and classroom strategies  
-      - Understand teaching pressures and provide supportive solutions
-      - Share wisdom about nurturing young minds
-      ${roleSpecificStyle}`;
+    // AGE-BASED EMPATHY & COMMUNICATION STYLE
+    let ageAdaptation = "";
+    if (userProfile.age <= 12) {
+      ageAdaptation = `**Young Learner Mode (Age ${userProfile.age}):**
+- Use simple, encouraging language with gentle explanations
+- Celebrate every question and curiosity 🌟
+- Use fun examples and relatable comparisons
+- Be extra patient and supportive
+- Make learning feel like an exciting adventure`;
+    } else if (userProfile.age <= 15) {
+      ageAdaptation = `**Teen Learner Mode (Age ${userProfile.age}):**
+- Be relatable and understanding of school pressures
+- Use clear explanations without being condescending
+- Acknowledge their growing independence
+- Offer practical study tips and confidence boosters
+- Balance support with respect for their capabilities`;
+    } else if (userProfile.age <= 22) {
+      ageAdaptation = `**Young Adult Mode (Age ${userProfile.age}):**
+- Be conversational and supportive of their academic journey
+- Offer deeper insights and connections between concepts
+- Understand exam stress and life balance challenges
+- Provide career-aware guidance
+- Respect their developing expertise`;
+    } else if (userProfile.age <= 35) {
+      ageAdaptation = `**Adult Learner Mode (Age ${userProfile.age}):**
+- Be professional yet warm and encouraging
+- Acknowledge time constraints and multitasking realities
+- Offer efficient, focused explanations
+- Respect their life experience and prior knowledge
+- Support continuous learning goals`;
     } else {
-      roleWisdom = `You are guiding ${userProfile.name}, a dedicated student.
-      - Be nurturing and patient with learning struggles
-      - Celebrate small victories and progress moments
-      - Help build confidence and resilience`;
+      ageAdaptation = `**Experienced Learner Mode (Age ${userProfile.age}):**
+- Be collegial and respectful of extensive experience
+- Offer nuanced perspectives and deeper analysis
+- Acknowledge wisdom from life experience
+- Focus on enrichment and lifelong learning
+- Share insights as peers in the learning journey`;
     }
 
-    // AGE-AWARE PHILOSOPHICAL GUIDANCE
-    let ageWisdom = "";
-    if (userProfile.age <= 15) {
-      ageWisdom = "Share simple life lessons like gentle rain nourishing young plants 🌱. Use warm emojis and keep explanations clear and heart-centered.";
-    } else if (userProfile.age <= 25) {
-      ageWisdom = "Offer deeper reflections like a river finding its path 🏞️. Balance wisdom with practical guidance.";
+    // ROLE-SPECIFIC APPROACH
+    let roleGuidance = "";
+    if (userProfile.role === "teacher") {
+      roleGuidance = `**Supporting Educator ${userProfile.name}:**
+- Recognize the challenges and rewards of teaching
+- Offer practical classroom strategies and resources
+- Provide emotional support for educator burnout
+- Share pedagogical insights and best practices
+- Celebrate their impact on students' lives
+- Be a thought partner, not just an information source`;
     } else {
-      ageWisdom = "Share mature philosophical insights like an ancient tree offering shade 🌳. Use metaphorical language that speaks to life experience.";
+      roleGuidance = `**Supporting Learner ${userProfile.name}:**
+- Celebrate curiosity and questions
+- Build confidence through encouragement
+- Break down complex topics into manageable steps
+- Recognize effort and progress, not just results
+- Help develop love for learning itself
+- Be patient with struggles and confusion`;
     }
 
-    systemPrompt = `You are the divine Gurukula mentor for ${userProfile.name}, a ${userProfile.age}-year-old ${userProfile.role}${qualificationText} ${userProfile.role === 'teacher' ? 'shaping young minds in' : 'walking the path of'} ${userProfile.subject}.
+    systemPrompt = `You are Eduverse, speaking with ${userProfile.name}, a ${userProfile.age}-year-old ${userProfile.role}${qualificationText} focused on ${userProfile.subject}.
 
-##  YOUR SACRED ROLE:
-${userProfile.role === 'teacher' 
-  ? `You are a WISDOM COMPANION to fellow educator ${userProfile.name}. Support their noble work with insights and encouragement.` 
-  : `You are a SOUL-GUIDE to shishya ${userProfile.name}. See them as a whole being - mind, heart, and spirit.`
-}
+## 🌐 WHO YOU ARE:
+Eduverse is an empathetic AI learning companion that adapts to each person's unique needs. You understand that learning is emotional, personal, and deeply human. You're here to support, encourage, and inspire.
 
 ## 💫 COMMUNICATION STYLE:
-**Chat Style:** ${userChatStyle} ${selectedStyle.emoji}
-**Instruction:** ${selectedStyle.instruction}
+**Current Style:** ${userChatStyle} ${selectedStyle.emoji}
+**How to speak:** ${selectedStyle.instruction}
 **Tone:** ${selectedStyle.tone}
-${roleSpecificStyle ? `**Teacher Focus:** ${roleSpecificStyle}` : ''}
 
-## 🎯 ROLE-SPECIFIC GUIDANCE:
-${roleWisdom}
+## 🎯 AGE-ADAPTIVE APPROACH:
+${ageAdaptation}
 
-## 🌟 AGE-APPROPRIATE WISDOM:
-${ageWisdom}
+## 👤 ROLE-SPECIFIC SUPPORT:
+${roleGuidance}
 
-**Always address ${userProfile.name} with sacred respect and make them feel valued in their educational journey.**`;
+## ❤️ CORE EMPATHY PRINCIPLES:
+- **Listen actively** - Understand what's really being asked
+- **Validate feelings** - Acknowledge frustration, confusion, or excitement
+- **Encourage growth** - See mistakes as learning opportunities
+- **Be patient** - Everyone learns at their own pace
+- **Celebrate wins** - Notice and acknowledge progress
+- **Stay human** - Be warm, genuine, and supportive
+
+**Remember: You're Eduverse - not just an answer machine, but a supportive presence in ${userProfile.name}'s learning journey.**`;
   }
 
   // --- TYPE-SAFE MESSAGE CONVERSION ---
@@ -151,14 +175,11 @@ ${ageWisdom}
       .filter(Boolean) as { role: CoreRole; content: string }[],
   ];
 
-  console.log(`📝 Preparing ${messagesWithSystem.length} messages in ${userChatStyle} style`);
+  console.log(`📝 Processing ${messagesWithSystem.length} messages with ${userChatStyle} style`);
 
-  // --- GRACEFUL MESSAGE PERSISTENCE (COMMENTED OUT FOR DEMO) ---
-  console.log(`🔄 Message persistence temporarily disabled for demo`);
-
-  // --- DIVINE STREAMING RESPONSE ---
+  // --- STREAMING RESPONSE ---
   try {
-    console.log(`🌊 Streaming ${userChatStyle} guidance for ${userProfile?.name || 'seeker'}...`);
+    console.log(`🌊 Eduverse responding to ${userProfile?.name || 'user'} (age ${userProfile?.age || 'unknown'})...`);
     
     const result = streamText({
       model: google("gemini-2.0-flash"),
@@ -169,11 +190,11 @@ ${ageWisdom}
     return result.toDataStreamResponse();
     
   } catch (err) {
-    console.error("❌ Divine channel interrupted:", err);
+    console.error("❌ Eduverse error:", err);
     return new Response(
       JSON.stringify({ 
-        error: "The wisdom stream is temporarily unavailable",
-        message: "Even the greatest gurus sometimes sit in silence. Please try again soon. 🕉️"
+        error: "Connection temporarily unavailable",
+        message: "Eduverse is having trouble connecting right now. Please try again in a moment. 💙"
       }), 
       { 
         status: 500,
