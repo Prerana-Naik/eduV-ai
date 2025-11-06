@@ -175,11 +175,11 @@ ${roleGuidance}
       .filter(Boolean) as { role: CoreRole; content: string }[],
   ];
 
-  console.log(📝 Processing ${messagesWithSystem.length} messages with ${userChatStyle} style);
+  console.log(`📝 Processing ${messagesWithSystem.length} messages with ${userChatStyle} style`);
 
   // --- STREAMING RESPONSE ---
   try {
-    console.log(🌊 Eduverse responding to ${userProfile?.name || 'user'} (age ${userProfile?.age || 'unknown'})...);
+    console.log(`🌊 Eduverse responding to ${userProfile?.name || 'user'} (age ${userProfile?.age || 'unknown'})...`);
     
     const result = streamText({
       model: google("gemini-2.0-flash"),
