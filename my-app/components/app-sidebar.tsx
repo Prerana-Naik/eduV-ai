@@ -251,7 +251,7 @@ function SparklePopup({ onClose }: { onClose: () => void }) {
                 >
                   {[
                     { icon: "📚", text: "Smart Learning", color: "from-blue-500 to-cyan-500" },
-                    { icon: "👨‍🏫", text: "AI Teachers", color: "from-purple-500 to-pink-500" },
+                    { icon: "☺️", text: "AI Companion", color: "from-purple-500 to-pink-500" },
                     { icon: "🎯", text: "Personalized", color: "from-green-500 to-emerald-500" },
                     { icon: "⚡", text: "Interactive", color: "from-orange-500 to-red-500" },
                   ].map((item, index) => (
