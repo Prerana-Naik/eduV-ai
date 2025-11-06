@@ -395,7 +395,7 @@ export const Thread: FC<ThreadProps> = ({
           { 
             user_id: userId, 
             content: historyContent,
-            title: Chat - ${new Date().toLocaleString()}
+            title: `Chat - ${new Date().toLocaleString()}`
           }
         ])
         .select()
