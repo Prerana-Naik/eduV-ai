@@ -387,7 +387,7 @@ export const Thread: FC<ThreadProps> = ({
         })
         .join("\n\n");
 
-      const historyContent = # Chat Conversation\n\n*Saved on ${new Date().toLocaleString()}*\n\n---\n\n${conversationText};
+      const historyContent = `# Chat Conversation\n\n*Saved on ${new Date().toLocaleString()}*\n\n---\n\n${conversationText}`;
       
       const { data, error } = await supabase
         .from("history")
