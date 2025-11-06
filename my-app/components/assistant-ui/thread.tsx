@@ -196,8 +196,8 @@ const HistoryModal: FC<{ userId: string | null; onClose: () => void }> = ({ user
             </p>
             <div className="whitespace-pre-wrap text-gray-700 leading-relaxed text-sm">
               {selectedItem.content.split("\n").map((line, i) => (
-                <div key={i} className={line.startsWith("") ? "font-semibold mt-3" : ""}>
-                  {line.replace(/\\/g, "")}
+                <div key={i} className={line.startsWith("**") ? "font-semibold mt-3" : ""}>
+                  {line.replace(/\*\*/g, "")}
                 </div>
               ))}
             </div>
@@ -430,7 +430,7 @@ export const Thread: FC<ThreadProps> = ({
   return (
     <>
       <ThreadPrimitive.Root
-        className={${bgColor} box-border flex h-full flex-col overflow-hidden}
+        className={`${bgColor} box-border flex h-full flex-col overflow-hidden`}
         style={{
           ["--thread-max-width" as string]: "42rem",
         }}
@@ -468,7 +468,7 @@ export const Thread: FC<ThreadProps> = ({
         </div>
 
         <ThreadPrimitive.Viewport
-          className={flex h-full flex-col items-center overflow-y-scroll scroll-smooth bg-inherit px-4 pt-8}
+          className={`flex h-full flex-col items-center overflow-y-scroll scroll-smooth bg-inherit px-4 pt-8`}
           style={variant === "modern" ? {
             scrollbarColor: "#bfc8d0 #f7f6f3",
             scrollbarWidth: "thin",
@@ -597,18 +597,18 @@ const getSuggestionsForRole = (role: string, userProfile?: UserProfile | null) =
     return [
       {
         title: "Create a quiz",
-        label: for ${subject},
-        action: Generate a quiz for ${subject} students that's engaging and educational.,
+        label: `for ${subject}`,
+        action: `Generate a quiz for ${subject} students that's engaging and educational.`,
       },
       {
         title: "Lesson plan ideas",
-        label: for teaching ${subject},
-        action: Suggest creative lesson plan ideas for teaching ${subject} concepts.,
+        label: `for teaching ${subject}`,
+        action: `Suggest creative lesson plan ideas for teaching ${subject} concepts.`,
       },
       {
         title: "Student assessment",
         label: "methods and rubrics",
-        action: Help me create assessment methods and rubrics for ${subject}.,
+        action: `Help me create assessment methods and rubrics for ${subject}.`,
       },
       {
         title: "Classroom management",
@@ -624,24 +624,24 @@ const getSuggestionsForRole = (role: string, userProfile?: UserProfile | null) =
   
   return [
     {
-      title: Explain ${subject},
+      title: `Explain ${subject}`,
       label: "in simple terms",
-      action: Can you explain key concepts in ${subject} in simple terms${ageText}?,
+      action: `Can you explain key concepts in ${subject} in simple terms${ageText}?`,
     },
     {
       title: "Help with homework",
-      label: ${subject} problems,
-      action: Can you help me understand and solve my ${subject} homework problems?,
+      label: `${subject} problems`,
+      action: `Can you help me understand and solve my ${subject} homework problems?`,
     },
     {
       title: "Study techniques",
-      label: for ${subject},
-      action: What are the best study techniques for learning ${subject}${ageText}?,
+      label: `for ${subject}`,
+      action: `What are the best study techniques for learning ${subject}${ageText}?`,
     },
     {
       title: "Practice questions",
-      label: test my knowledge,
-      action: Give me practice questions to test my understanding of ${subject}${ageText}.,
+      label: `test my knowledge`,
+      action: `Give me practice questions to test my understanding of ${subject}${ageText}.`,
     },
   ];
 };
@@ -661,7 +661,7 @@ const ThreadWelcomeSuggestions: FC<{
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ delay: 0.05 * index }}
-          key={suggested-action-${suggestedAction.title}-${index}}
+          key={`suggested-action-${suggestedAction.title}-${index}`}
           className="[&:nth-child(n+3)]:hidden sm:[&:nth-child(n+3)]:block"
         >
           <ThreadPrimitive.Suggestion
@@ -691,7 +691,7 @@ const Composer: FC<{ userRole?: string; variant?: "modern" | "classic"; userProf
   userProfile = null
 }) => {
   const placeholder = userProfile 
-    ? Ask me about ${userProfile.subject}...
+    ? `Ask me about ${userProfile.subject}...`
     : "Send a message...";
 
   return (
