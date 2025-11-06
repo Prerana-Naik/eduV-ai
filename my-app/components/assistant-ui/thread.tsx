@@ -43,7 +43,7 @@ type UserProfile = {
   role: string;
   age: number | string;
   subject: string;
-  chatStyle: string;
+  chat_style: string;
   qualification?: string;
   email?: string;
 };
@@ -196,8 +196,8 @@ const HistoryModal: FC<{ userId: string | null; onClose: () => void }> = ({ user
             </p>
             <div className="whitespace-pre-wrap text-gray-700 leading-relaxed text-sm">
               {selectedItem.content.split("\n").map((line, i) => (
-                <div key={i} className={line.startsWith("**") ? "font-semibold mt-3" : ""}>
-                  {line.replace(/\*\*/g, "")}
+                <div key={i} className={line.startsWith("") ? "font-semibold mt-3" : ""}>
+                  {line.replace(/\\/g, "")}
                 </div>
               ))}
             </div>
@@ -383,11 +383,11 @@ export const Thread: FC<ThreadProps> = ({
           const content = msg.content[0]?.type === "text" 
             ? msg.content[0].text 
             : "[Media content]";
-          return `**${role}:** ${content}`;
+          return **${role}:** ${content};
         })
         .join("\n\n");
 
-      const historyContent = `# Chat Conversation\n\n*Saved on ${new Date().toLocaleString()}*\n\n---\n\n${conversationText}`;
+      const historyContent = # Chat Conversation\n\n*Saved on ${new Date().toLocaleString()}*\n\n---\n\n${conversationText};
       
       const { data, error } = await supabase
         .from("history")
@@ -395,7 +395,7 @@ export const Thread: FC<ThreadProps> = ({
           { 
             user_id: userId, 
             content: historyContent,
-            title: `Chat - ${new Date().toLocaleString()}`
+            title: Chat - ${new Date().toLocaleString()}
           }
         ])
         .select()
@@ -430,7 +430,7 @@ export const Thread: FC<ThreadProps> = ({
   return (
     <>
       <ThreadPrimitive.Root
-        className={`${bgColor} box-border flex h-full flex-col overflow-hidden`}
+        className={${bgColor} box-border flex h-full flex-col overflow-hidden}
         style={{
           ["--thread-max-width" as string]: "42rem",
         }}
@@ -468,7 +468,7 @@ export const Thread: FC<ThreadProps> = ({
         </div>
 
         <ThreadPrimitive.Viewport
-          className={`flex h-full flex-col items-center overflow-y-scroll scroll-smooth bg-inherit px-4 pt-8`}
+          className={flex h-full flex-col items-center overflow-y-scroll scroll-smooth bg-inherit px-4 pt-8}
           style={variant === "modern" ? {
             scrollbarColor: "#bfc8d0 #f7f6f3",
             scrollbarWidth: "thin",
@@ -576,7 +576,7 @@ const ThreadWelcome: FC<{ variant?: "modern" | "classic"; userRole?: string; use
                 transition={{ delay: 0.7 }}
                 className="text-muted-foreground/50 text-sm mt-2"
               >
-                Ready to help with {userProfile.subject} in a {userProfile?.chatStyle?.toLowerCase() || "friendly"} style.
+                Ready to help with {userProfile.subject} in a {userProfile?.chat_style?.toLowerCase() || "friendly"} style.
               </motion.div>
             )}
           </div>
@@ -597,18 +597,18 @@ const getSuggestionsForRole = (role: string, userProfile?: UserProfile | null) =
     return [
       {
         title: "Create a quiz",
-        label: `for ${subject}`,
-        action: `Generate a quiz for ${subject} students that's engaging and educational.`,
+        label: for ${subject},
+        action: Generate a quiz for ${subject} students that's engaging and educational.,
       },
       {
         title: "Lesson plan ideas",
-        label: `for teaching ${subject}`,
-        action: `Suggest creative lesson plan ideas for teaching ${subject} concepts.`,
+        label: for teaching ${subject},
+        action: Suggest creative lesson plan ideas for teaching ${subject} concepts.,
       },
       {
         title: "Student assessment",
         label: "methods and rubrics",
-        action: `Help me create assessment methods and rubrics for ${subject}.`,
+        action: Help me create assessment methods and rubrics for ${subject}.,
       },
       {
         title: "Classroom management",
@@ -624,24 +624,24 @@ const getSuggestionsForRole = (role: string, userProfile?: UserProfile | null) =
   
   return [
     {
-      title: `Explain ${subject}`,
+      title: Explain ${subject},
       label: "in simple terms",
-      action: `Can you explain key concepts in ${subject} in simple terms${ageText}?`,
+      action: Can you explain key concepts in ${subject} in simple terms${ageText}?,
     },
     {
       title: "Help with homework",
-      label: `${subject} problems`,
-      action: `Can you help me understand and solve my ${subject} homework problems?`,
+      label: ${subject} problems,
+      action: Can you help me understand and solve my ${subject} homework problems?,
     },
     {
       title: "Study techniques",
-      label: `for ${subject}`,
-      action: `What are the best study techniques for learning ${subject}${ageText}?`,
+      label: for ${subject},
+      action: What are the best study techniques for learning ${subject}${ageText}?,
     },
     {
       title: "Practice questions",
-      label: `test my knowledge`,
-      action: `Give me practice questions to test my understanding of ${subject}${ageText}.`,
+      label: test my knowledge,
+      action: Give me practice questions to test my understanding of ${subject}${ageText}.,
     },
   ];
 };
@@ -661,7 +661,7 @@ const ThreadWelcomeSuggestions: FC<{
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ delay: 0.05 * index }}
-          key={`suggested-action-${suggestedAction.title}-${index}`}
+          key={suggested-action-${suggestedAction.title}-${index}}
           className="[&:nth-child(n+3)]:hidden sm:[&:nth-child(n+3)]:block"
         >
           <ThreadPrimitive.Suggestion
@@ -691,7 +691,7 @@ const Composer: FC<{ userRole?: string; variant?: "modern" | "classic"; userProf
   userProfile = null
 }) => {
   const placeholder = userProfile 
-    ? `Ask me about ${userProfile.subject}...`
+    ? Ask me about ${userProfile.subject}...
     : "Send a message...";
 
   return (
@@ -710,16 +710,14 @@ const Composer: FC<{ userRole?: string; variant?: "modern" | "classic"; userProf
   );
 };
 
+// Simple fix: Update the ComposerAction component
+// Find this component in your thread.tsx and replace it:
+
 const ComposerAction: FC<{ variant?: "modern" | "classic" }> = ({ variant = "modern" }) => {
   return (
-    <div className="bg-gray-50 relative flex items-center justify-between rounded-b-2xl border-x border-b p-3">
-      <TooltipIconButton
-        tooltip="Attach file"
-        variant="ghost"
-        className="hover:bg-gray-200 p-2.5 rounded-lg transition-colors"
-      >
-        <PlusIcon className="h-4 w-4 text-gray-600" />
-      </TooltipIconButton>
+    <div className="bg-gray-50 relative flex items-center justify-end rounded-b-2xl border-x border-b p-3">
+      {/* ❌ REMOVED: Attach file button */}
+      {/* <TooltipIconButton tooltip="Attach file" ... /> */}
 
       <ThreadPrimitive.If running={false}>
         <ComposerPrimitive.Send asChild>
@@ -747,16 +745,6 @@ const ComposerAction: FC<{ variant?: "modern" | "classic" }> = ({ variant = "mod
         </ComposerPrimitive.Cancel>
       </ThreadPrimitive.If>
     </div>
-  );
-};
-
-const MessageError: FC = () => {
-  return (
-    <MessagePrimitive.Error>
-      <ErrorPrimitive.Root className="border-destructive bg-destructive/10 text-destructive mt-2 rounded-md border p-3 text-sm">
-        <ErrorPrimitive.Message className="line-clamp-2" />
-      </ErrorPrimitive.Root>
-    </MessagePrimitive.Error>
   );
 };
 
@@ -798,7 +786,6 @@ const AssistantMessage: FC<{ variant?: "modern" | "classic"; userProfile?: UserP
               tools: { Fallback: ToolFallback },
             }}
           />
-          <MessageError />
         </div>
 
         <AssistantActionBar 
