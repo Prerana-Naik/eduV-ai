@@ -65,7 +65,7 @@ console.log(`💬 Thread: ${threadId || 'New Conversation'}`);
 Your mission is to support, encourage, and inspire learners and educators with warmth and understanding.`;
 
   if (userProfile) {
-    const qualificationText = userProfile.qualification ? , ${userProfile.qualification} : '';
+    const qualificationText = userProfile.qualification ? `, ${userProfile.qualification}` : '';
     
     // AGE-BASED EMPATHY & COMMUNICATION STYLE
     let ageAdaptation = "";
