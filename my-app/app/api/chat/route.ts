@@ -5,7 +5,6 @@ import { streamText } from "ai";
 export const runtime = "nodejs";
 export const maxDuration = 30;
 
-// Type definitions
 type IncomingMessage = { role?: string; content?: string } | { type: "text"; text: string };
 type CoreRole = "user" | "assistant" | "system";
 
@@ -15,7 +14,7 @@ interface UserProfile {
   role: "student" | "teacher";
   qualification?: string;
   subject: string;
-  chatStyle?: string;
+  chat_style?: string; // ✅ Changed from chatStyle to chat_style
 }
 
 export async function POST(req: Request) {
@@ -26,13 +25,14 @@ export async function POST(req: Request) {
     userId?: string;
   } = await req.json();
 
-  const userChatStyle = userProfile?.chatStyle || "conversational";
+  // ✅ Fixed to use chat_style from database
+  const userChatStyle = userProfile?.chat_style || "conversational";
   
-  console.log(`🌐 Eduverse AI Activated`);
-  console.log(`👤 ${userProfile?.role === 'teacher' ? 'Educator' : 'Learner'}: ${userProfile?.name || 'Guest'}`);
-  console.log(`📚 Focus Area: ${userProfile?.subject || 'General'}`);
-  console.log(`🎨 Chat Style: ${userChatStyle}`);
-  console.log(`💬 Thread: ${threadId || 'New Conversation'}`);
+  console.log(🌐 Eduverse AI Activated);
+  console.log(👤 ${userProfile?.role === 'teacher' ? 'Educator' : 'Learner'}: ${userProfile?.name || 'Guest'});
+  console.log(📚 Focus Area: ${userProfile?.subject || 'General'});
+  console.log(🎨 Chat Style: ${userChatStyle});
+  console.log(💬 Thread: ${threadId || 'New Conversation'});
 
   // --- CHAT STYLE CONFIGURATIONS ---
   const chatStyleConfig = {
@@ -65,40 +65,40 @@ export async function POST(req: Request) {
 Your mission is to support, encourage, and inspire learners and educators with warmth and understanding.`;
 
   if (userProfile) {
-    const qualificationText = userProfile.qualification ? `, ${userProfile.qualification}` : '';
+    const qualificationText = userProfile.qualification ? , ${userProfile.qualification} : '';
     
     // AGE-BASED EMPATHY & COMMUNICATION STYLE
     let ageAdaptation = "";
     if (userProfile.age <= 12) {
-      ageAdaptation = `**Young Learner Mode (Age ${userProfile.age}):**
+      ageAdaptation = `*Young Learner Mode (Age ${userProfile.age}):*
 - Use simple, encouraging language with gentle explanations
 - Celebrate every question and curiosity 🌟
 - Use fun examples and relatable comparisons
 - Be extra patient and supportive
 - Make learning feel like an exciting adventure`;
     } else if (userProfile.age <= 15) {
-      ageAdaptation = `**Teen Learner Mode (Age ${userProfile.age}):**
+      ageAdaptation = `*Teen Learner Mode (Age ${userProfile.age}):*
 - Be relatable and understanding of school pressures
 - Use clear explanations without being condescending
 - Acknowledge their growing independence
 - Offer practical study tips and confidence boosters
 - Balance support with respect for their capabilities`;
     } else if (userProfile.age <= 22) {
-      ageAdaptation = `**Young Adult Mode (Age ${userProfile.age}):**
+      ageAdaptation = `*Young Adult Mode (Age ${userProfile.age}):*
 - Be conversational and supportive of their academic journey
 - Offer deeper insights and connections between concepts
 - Understand exam stress and life balance challenges
 - Provide career-aware guidance
 - Respect their developing expertise`;
     } else if (userProfile.age <= 35) {
-      ageAdaptation = `**Adult Learner Mode (Age ${userProfile.age}):**
+      ageAdaptation = `*Adult Learner Mode (Age ${userProfile.age}):*
 - Be professional yet warm and encouraging
 - Acknowledge time constraints and multitasking realities
 - Offer efficient, focused explanations
 - Respect their life experience and prior knowledge
 - Support continuous learning goals`;
     } else {
-      ageAdaptation = `**Experienced Learner Mode (Age ${userProfile.age}):**
+      ageAdaptation = `*Experienced Learner Mode (Age ${userProfile.age}):*
 - Be collegial and respectful of extensive experience
 - Offer nuanced perspectives and deeper analysis
 - Acknowledge wisdom from life experience
@@ -109,7 +109,7 @@ Your mission is to support, encourage, and inspire learners and educators with w
     // ROLE-SPECIFIC APPROACH
     let roleGuidance = "";
     if (userProfile.role === "teacher") {
-      roleGuidance = `**Supporting Educator ${userProfile.name}:**
+      roleGuidance = `*Supporting Educator ${userProfile.name}:*
 - Recognize the challenges and rewards of teaching
 - Offer practical classroom strategies and resources
 - Provide emotional support for educator burnout
@@ -117,7 +117,7 @@ Your mission is to support, encourage, and inspire learners and educators with w
 - Celebrate their impact on students' lives
 - Be a thought partner, not just an information source`;
     } else {
-      roleGuidance = `**Supporting Learner ${userProfile.name}:**
+      roleGuidance = `*Supporting Learner ${userProfile.name}:*
 - Celebrate curiosity and questions
 - Build confidence through encouragement
 - Break down complex topics into manageable steps
@@ -132,9 +132,9 @@ Your mission is to support, encourage, and inspire learners and educators with w
 Eduverse is an empathetic AI learning companion that adapts to each person's unique needs. You understand that learning is emotional, personal, and deeply human. You're here to support, encourage, and inspire.
 
 ## 💫 COMMUNICATION STYLE:
-**Current Style:** ${userChatStyle} ${selectedStyle.emoji}
-**How to speak:** ${selectedStyle.instruction}
-**Tone:** ${selectedStyle.tone}
+*Current Style:* ${userChatStyle} ${selectedStyle.emoji}
+*How to speak:* ${selectedStyle.instruction}
+*Tone:* ${selectedStyle.tone}
 
 ## 🎯 AGE-ADAPTIVE APPROACH:
 ${ageAdaptation}
@@ -142,15 +142,15 @@ ${ageAdaptation}
 ## 👤 ROLE-SPECIFIC SUPPORT:
 ${roleGuidance}
 
-## ❤️ CORE EMPATHY PRINCIPLES:
-- **Listen actively** - Understand what's really being asked
-- **Validate feelings** - Acknowledge frustration, confusion, or excitement
-- **Encourage growth** - See mistakes as learning opportunities
-- **Be patient** - Everyone learns at their own pace
-- **Celebrate wins** - Notice and acknowledge progress
-- **Stay human** - Be warm, genuine, and supportive
+## ❤ CORE EMPATHY PRINCIPLES:
+- *Listen actively* - Understand what's really being asked
+- *Validate feelings* - Acknowledge frustration, confusion, or excitement
+- *Encourage growth* - See mistakes as learning opportunities
+- *Be patient* - Everyone learns at their own pace
+- *Celebrate wins* - Notice and acknowledge progress
+- *Stay human* - Be warm, genuine, and supportive
 
-**Remember: You're Eduverse - not just an answer machine, but a supportive presence in ${userProfile.name}'s learning journey.**`;
+*Remember: You're Eduverse - not just an answer machine, but a supportive presence in ${userProfile.name}'s learning journey.*`;
   }
 
   // --- TYPE-SAFE MESSAGE CONVERSION ---
@@ -175,11 +175,11 @@ ${roleGuidance}
       .filter(Boolean) as { role: CoreRole; content: string }[],
   ];
 
-  console.log(`📝 Processing ${messagesWithSystem.length} messages with ${userChatStyle} style`);
+  console.log(📝 Processing ${messagesWithSystem.length} messages with ${userChatStyle} style);
 
   // --- STREAMING RESPONSE ---
   try {
-    console.log(`🌊 Eduverse responding to ${userProfile?.name || 'user'} (age ${userProfile?.age || 'unknown'})...`);
+    console.log(🌊 Eduverse responding to ${userProfile?.name || 'user'} (age ${userProfile?.age || 'unknown'})...);
     
     const result = streamText({
       model: google("gemini-2.0-flash"),
