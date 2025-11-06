@@ -383,7 +383,7 @@ export const Thread: FC<ThreadProps> = ({
           const content = msg.content[0]?.type === "text" 
             ? msg.content[0].text 
             : "[Media content]";
-          return **${role}:** ${content};
+          return `**${role}:** ${content}`;
         })
         .join("\n\n");
 
