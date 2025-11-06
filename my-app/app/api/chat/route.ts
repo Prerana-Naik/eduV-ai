@@ -28,11 +28,11 @@ export async function POST(req: Request) {
   // ✅ Fixed to use chat_style from database
   const userChatStyle = userProfile?.chat_style || "conversational";
   
-  console.log(🌐 Eduverse AI Activated);
-  console.log(👤 ${userProfile?.role === 'teacher' ? 'Educator' : 'Learner'}: ${userProfile?.name || 'Guest'});
-  console.log(📚 Focus Area: ${userProfile?.subject || 'General'});
-  console.log(🎨 Chat Style: ${userChatStyle});
-  console.log(💬 Thread: ${threadId || 'New Conversation'});
+console.log(`🌐 Eduverse AI Activated`);
+console.log(`👤 ${userProfile?.role === 'teacher' ? 'Educator' : 'Learner'}: ${userProfile?.name || 'Guest'}`);
+console.log(`📚 Focus Area: ${userProfile?.subject || 'General'}`);
+console.log(`🎨 Chat Style: ${userChatStyle}`);
+console.log(`💬 Thread: ${threadId || 'New Conversation'}`);
 
   // --- CHAT STYLE CONFIGURATIONS ---
   const chatStyleConfig = {
