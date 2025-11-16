@@ -255,7 +255,6 @@ export default function Dashboard() {
   const stats: Stat[] = [
     { icon: Users, value: "10", label: "Student Tools" },
     { icon: GraduationCap, value: "7", label: "Teacher Tools" },
-    { icon: Zap, value: "100%", label: "Offline Tools Access" },
     { icon: Shield, value: "AI", label: "Assistant" },
   ];
 
