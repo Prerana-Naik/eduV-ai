@@ -42,8 +42,7 @@ const TeacherApps: AppItem[] = [
 export const TeacherSidebar: FC<TeacherSidebarProps> = () => (
   <div className="space-y-4 p-3 h-full overflow-y-auto">
     <div className="text-center mb-4">
-      <h2 className="text-lg font-bold text-gray-800">Teaching Tools 👩‍🏫</h2>
-      <p className="text-sm text-gray-600">Tools to enhance your teaching</p>
+      <h2 className="text-lg font-bold text-gray-800">Teacher's Tools 👩‍🏫</h2>
     </div>
 
     <Card>
@@ -72,5 +71,6 @@ export const TeacherSidebar: FC<TeacherSidebarProps> = () => (
     </Card>
   </div>
 );
+
 
 export default TeacherSidebar;
