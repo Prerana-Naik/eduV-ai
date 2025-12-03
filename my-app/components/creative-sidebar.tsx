@@ -45,7 +45,6 @@ export const CreativeSidebar: FC<CreativeSidebarProps> = () => (
   <div className="space-y-4 p-3 h-full overflow-y-auto">
     <div className="text-center mb-4">
       <h2 className="text-lg font-bold text-gray-800">Creative Tools 🎨</h2>
-      <p className="text-sm text-gray-600">Offline apps ready to use!</p>
     </div>
 
     <Card>
@@ -76,3 +75,4 @@ export const CreativeSidebar: FC<CreativeSidebarProps> = () => (
 );
 
 export default CreativeSidebar;
+
